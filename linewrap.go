@@ -159,7 +159,7 @@ func (w *Wrap) word() error {
 		if err != nil {
 			return err
 		}
-		if unicode.IsSpace(ch) {
+		if isSpace(ch) {
 			// back up because we only return the word, not the separator
 			err = w.r.UnreadRune()
 			if err != nil {
@@ -179,7 +179,7 @@ func (w *Wrap) spaces() error {
 		if err != nil {
 			return err
 		}
-		if !unicode.IsSpace(ch) {
+		if !isSpace(ch) {
 			// back up because we only return the spaces, not non-Space chars
 			err = w.r.UnreadRune()
 			if err != nil {
@@ -187,6 +187,7 @@ func (w *Wrap) spaces() error {
 			}
 			return nil
 		}
+		// should actually be considered a space
 		w.runes = append(w.runes, ch)
 	}
 }
@@ -237,4 +238,19 @@ func (w *Wrap) processSpaceChunk() error {
 		}
 	}
 	return nil
+}
+
+// isSpace corrects (from the perspective of this package) some invalid
+// evaluations of unicode.IsSpace.
+func isSpace(r rune) bool {
+	// check exceptions. some unicode spaces don't evaluate to true
+	if r == '\u200b' {
+		return true
+	}
+	// check exceptions, no break spaces are spaces but we don't
+	// treat them as spaces since one shouldn't line break on them
+	if r == '\u00A0' || r == '\u202F' {
+		return false
+	}
+	return unicode.IsSpace(r)
 }

@@ -47,10 +47,17 @@ func TestLine(t *testing.T) {
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, true, "\t", "\n", "hello\n\tΧαίρετε\t\t\n\tЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, false, "    ", "\n", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, false, "\t", "\n", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
-		// nbsp
-		{"Reality isU+00A0frequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis frequently \ninaccurate."},
+		// altspaces
+		{"Reality is\u00A0frequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u00A0frequently \ninaccurate."},
+		{"Reality is\u00a0frequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u00a0frequently \ninaccurate."},
+		{"Reality is\u2005frequently inaccurate.", 20, 4, false, "", "\n", "Reality is\u2005\nfrequently \ninaccurate."},
+		{"Reality is\u2001frequently inaccurate.", 20, 4, false, "", "\n", "Reality is\u2001\nfrequently \ninaccurate."},
+		{"Reality is\u200Bfrequently inaccurate.", 20, 4, false, "", "\n", "Reality is\u200B\nfrequently \ninaccurate."},
 
-		// alt spaces
+		{"Reality is\u200bfrequently inaccurate.", 20, 4, false, "", "\n", "Reality is\u200b\nfrequently \ninaccurate."},
+		{"Reality is\u202Ffrequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u202Ffrequently \ninaccurate."},
+		{"Reality is\u202ffrequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u202ffrequently \ninaccurate."},
+		{"Reality is\uFEFFfrequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\uFEFFfrequently \ninaccurate."},
 		// dashes
 		// nbdash
 	}
