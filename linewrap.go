@@ -185,6 +185,12 @@ func (w *Wrap) word() error {
 			return nil
 		}
 		w.runes = append(w.runes, ch)
+		// a hyphen is included with a chunk of non-whitespace chars but causes
+		// a chunk boundary just in case there's a wrap after the hyphen but
+		// before the end of the next chunk.
+		if isHyphen(ch) {
+			return nil
+		}
 	}
 }
 
@@ -196,7 +202,7 @@ func (w *Wrap) spaces() error {
 		if err != nil {
 			return err
 		}
-		if !isSpace(ch) {
+		if !isSpace(ch) && !isHyphen(ch) {
 			// back up because we only return the spaces, not non-Space chars
 			err = w.r.UnreadRune()
 			if err != nil {
