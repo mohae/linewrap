@@ -47,8 +47,9 @@ func TestLine(t *testing.T) {
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, true, "\t", "\n", "hello\n\tΧαίρετε\t\t\n\tЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, false, "    ", "\n", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, false, "\t", "\n", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
-
 		// nbsp
+		{"Reality isU+00A0frequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis frequently \ninaccurate."},
+
 		// alt spaces
 		// dashes
 		// nbdash
