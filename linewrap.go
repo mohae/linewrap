@@ -1,3 +1,20 @@
+// Copyright 2017 Joel Scoble
+// Licensed under the MIT License;
+// you may not use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This file includes code from Go's unicode package. Information about which
+// file from which the code is copied is local to the actual code in the file.
+// This is the original copyright notice for the relevant code:
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package linewrap
 
 import (
@@ -253,4 +270,77 @@ func isSpace(r rune) bool {
 		return false
 	}
 	return unicode.IsSpace(r)
+}
+
+// isHyphen checks to see if the rune is a unicode hyphen. The following hypens
+// evaluate to false for the purposes of linewrap:
+//   * U+2011 non-breaking hyphen
+//   * U+207B superscript minus
+//   * U+208B subscript minus
+//
+// This code is based on
+//   https://golang.org/src/unicode/letter.go?h=isExcludingLatin#L170
+// See the Go Authors copyright notice found at the top of this file.
+func isHyphen(r rune) bool {
+	// this handles ASCII
+	if uint32(r) <= unicode.MaxLatin1 {
+		switch r {
+		case '\u002d', '\u007e', '\u00ad':
+			return true
+		default:
+			return false
+		}
+	}
+	// Dashes that we don't consider dash
+	switch r {
+	case '\u2011', '\u207B', '\u208B':
+		return false
+	}
+
+	dashTab := unicode.Dash.R16
+	if off := unicode.Dash.LatinOffset; len(dashTab) > off && r <= rune(dashTab[len(dashTab)-1].Hi) {
+		return is16(dashTab[off:], uint16(r))
+	}
+	return false
+}
+
+// This code is based on
+//   https://golang.org/src/unicode/letter.go?h=isExcludingLatin#L170
+// See the Go Authors copyright notice found at the top of this file.
+
+// linearMax is the maximum size table for linear search for non-Latin1 rune.
+// Derived by running 'go test -calibrate'.
+const linearMax = 18
+
+// is16 reports whether r is in the sorted slice of 16-bit ranges.
+func is16(ranges []unicode.Range16, r uint16) bool {
+	if len(ranges) <= linearMax || r <= unicode.MaxLatin1 {
+		for i := range ranges {
+			range_ := &ranges[i]
+			if r < range_.Lo {
+				return false
+			}
+			if r <= range_.Hi {
+				return (r-range_.Lo)%range_.Stride == 0
+			}
+		}
+		return false
+	}
+
+	// binary search over ranges
+	lo := 0
+	hi := len(ranges)
+	for lo < hi {
+		m := lo + (hi-lo)/2
+		range_ := &ranges[m]
+		if range_.Lo <= r && r <= range_.Hi {
+			return (r-range_.Lo)%range_.Stride == 0
+		}
+		if r < range_.Lo {
+			hi = m
+		} else {
+			lo = m + 1
+		}
+	}
+	return false
 }

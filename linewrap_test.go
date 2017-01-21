@@ -58,8 +58,6 @@ func TestLine(t *testing.T) {
 		{"Reality is\u202Ffrequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u202Ffrequently \ninaccurate."},
 		{"Reality is\u202ffrequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u202ffrequently \ninaccurate."},
 		{"Reality is\uFEFFfrequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\uFEFFfrequently \ninaccurate."},
-		// dashes
-		// nbdash
 	}
 	w := New()
 	for i, test := range tests {
@@ -79,35 +77,45 @@ func TestLine(t *testing.T) {
 	}
 }
 
-/*
-func TestStringInComments(t *testing.T) {
+func TestIsHyphen(t *testing.T) {
 	tests := []struct {
-		line  string
-		l     int
-		lines []string
+		r rune
+		b bool
 	}{
-		{"", 10, nil},
-		{"Hello", 10, []string{"// Hello"}},
-		{"Hello World", 10, []string{"// Hello", "// World"}},
-		{"This sentence is a meaningless one", 0, []string{"// This sentence is a meaningless one"}},
-		{"This sentence is a meaningless one", 20, []string{"// This sentence is", "// a meaningless one"}},
-		{"못 알아 듣겠어요 전혀 모르겠어요", 10, []string{"// 못 알아", "// 듣겠어요 전혀", "// 모르겠어요"}},
-		// outlier, but if a word > l then use the whole word anyways
-		{"hello Χαίρετε Здравствуйте", 10, []string{"// hello", "// Χαίρετε", "// Здравствуйте"}},
+		{'\u0020', false},
+		{'\u2011', false},
+		{'\u207b', false},
+		{'\u208b', false},
+		{'\u002d', true},
+		{'\u007e', true},
+		{'\u00ad', true},
+		{'\u058a', true},
+		{'\u05be', true},
+		{'\u1400', true},
+		{'\u1806', true},
+		{'\u2010', true},
+		{'\u2012', true},
+		{'\u2013', true},
+		{'\u2014', true},
+		{'\u2015', true},
+		{'\u2053', true},
+		{'\u2212', true},
+		{'\u2e17', true},
+		{'\u2e3a', true},
+		{'\u2e3b', true},
+		{'\u301c', true},
+		{'\u3030', true},
+		{'\u30a0', true},
+		{'\ufe31', true},
+		{'\ufe32', true},
+		{'\ufe58', true},
+		{'\ufe63', true},
+		{'\uff0d', true},
 	}
-	for i, test := range tests {
-		lines := StringToComments(test.line, test.l)
-		if len(lines) != len(test.lines) {
-			t.Errorf("%d: got %d lines; want %d", i, len(lines), len(test.lines))
-			t.Errorf("%s", lines)
-			continue
-		}
-		for j, v := range lines {
-			if v != test.lines[j] {
-				t.Errorf("%d:%d: got %q; want %q", i, j, v, test.lines[j])
-				continue
-			}
+	for _, test := range tests {
+		b := isHyphen(test.r)
+		if b != test.b {
+			t.Errorf("%x %c: got %t; want %t", test.r, test.r, b, test.b)
 		}
 	}
 }
-*/
