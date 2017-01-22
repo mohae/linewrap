@@ -1,4 +1,5 @@
 # linewrap
+[![GoDoc](https://godoc.org/github.com/mohae/linewrap?status.svg)](https://godoc.org/github.com/mohae/linewrap)[![Build Status](https://travis-ci.org/mohae/linewrap.png)](https://travis-ci.org/mohae/linewrap)
 wraps a string so that each line the are <= Length. Lines can be optionally indented. When indenting isn't enabled, linewrap will preserve all whitespaces in the string and only insert new line characters.
 
 Linewrap calculates line length on a per character basis with the exception of '\t', which is counted as TabSize spaces, which is configurable using `Wrap.TabSize`, for the sake of calculating the current line length. The new line character to use is also configurable using `Wrap.NewLine`. Any existing new line characters in the string  will be replaced with the `Wrap.NewLine` new line character and any inserted new line will also use `Wrap.NewLine`. This can be set on the package level.
@@ -29,3 +30,10 @@ code point|symbol|name|IsHyphen
 U+2011|‑|No-break Hyphen|False  
 U+207B|⁻|Superscript Minus|False  
 U+208B|₋|Subscript Minus|False
+
+### TODO:
+
+* Unwrap: remove inserted new lines.
+* Tab substitution.
+* Elide Whitespace
+* return slice option
