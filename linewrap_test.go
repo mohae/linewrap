@@ -2,7 +2,7 @@ package linewrap
 
 import "testing"
 
-func TestLine(t *testing.T) {
+func TestWrapLine(t *testing.T) {
 	tests := []struct {
 		s         string
 		length    int
@@ -80,7 +80,7 @@ func TestLine(t *testing.T) {
 		w.TabSize = test.tabSize
 		w.Indent = test.indent
 		w.IndentVal = test.indentVal
-		w.NewLine = []byte(test.newLine)
+		w.NewLine = test.newLine
 		s, err := w.Line(test.s)
 		if err != nil {
 			t.Errorf("%d: unexpected error: %q", i, err)
@@ -88,6 +88,42 @@ func TestLine(t *testing.T) {
 		}
 		if s != test.expected {
 			t.Errorf("%d: got %q want %q", i, s, test.expected)
+		}
+	}
+}
+
+func TestUnwrappable(t *testing.T) {
+	tests := []struct {
+		s       string
+		newLine string
+		wrapped string
+	}{
+		{"This sentence is a meaningless one", "\n", "This sentence is a \ufeff\nmeaningless one"},
+		{"This sentence is a meaningless one", "\r\n", "This sentence is a \ufeff\r\nmeaningless one"},
+		{"This sentence isn't \na meaningless sentence", "\n", "This sentence isn't \na meaningless \ufeff\nsentence"},
+		{"This sentence isn't \r\na meaningless sentence", "\r\n", "This sentence isn't \r\na meaningless \ufeff\r\nsentence"},
+		{"A common mistake\n that people make \nwhen trying to \ndesign something\n completely foolproof is to underestimate the ingenuity of complete fools.", "\n", "A common mistake\n that people make \nwhen trying to \ndesign something\n completely \ufeff\nfoolproof is to \ufeff\nunderestimate the \ufeff\ningenuity of \ufeff\ncomplete fools."},
+
+		{"못\n알아\t듣겠어요\t전혀\t모르겠어요", "\n", "못\n알아\t듣겠어요\t\ufeff\n전혀\t모르겠어요"},
+		{"못\n알아\ufeff\t듣겠어요\t전혀\t모르겠어요", "\n", "못\n알아\ufeff\t듣겠어요\t\ufeff\n전혀\t모르겠어요"},
+		{"hello\nΧαίρετε\t\tЗдравствуйте", "\n", "hello\nΧαίρετε\t\t\ufeff\nЗдравствуйте"},
+	}
+	w := New()
+	w.Length = 20
+	w.Unwrappable = true
+	for i, test := range tests {
+		w.NewLine = test.newLine
+		s, err := w.Line(test.s)
+		if err != nil {
+			t.Errorf("%d: unexpected error: %q", i, err)
+			continue
+		}
+		if s != test.wrapped {
+			t.Errorf("wrap %d: got %q want %q", i, s, test.wrapped)
+		}
+		s = Unwrap(s)
+		if s != test.s {
+			t.Errorf("unwrap %d: got %q want %q", i, s, test.s)
 		}
 	}
 }

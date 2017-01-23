@@ -22,12 +22,19 @@ import (
 	"io"
 	"strings"
 	"unicode"
+	"unicode/utf8"
+)
+
+const (
+	zeroNBSP = '\ufeff' // Zero-width no break space
+	cr       = '\r'
+	lf       = '\n'
 )
 
 var (
 	LineLength = 80
 	TabSize    = 5
-	NewLine    = []byte("\n")
+	NewLine    = "\n"
 )
 
 // Wrap processes strings into wrapped lines. If the wrapped lines are indented,
@@ -39,10 +46,22 @@ type Wrap struct {
 	TabSize   int
 	Indent    bool   // Indent wrapped lines
 	IndentVal string // The string used to indent wrapped lines
-	indentLen int    // The number of chars in IndnetVal; this accounts for tabs.
+	// If the wrapped string should be unwrappable. Unwrappable means all inserted
+	// linebreaks can be removed and the unwrapped string will retain all of its
+	// original formatting. If Unwrappable, the wrapped text will not be indented.
+	// If there was a new line sequence substitution during line wrapping the
+	// wrapped new line char(s) will be kept.
+	Unwrappable bool
+	indentLen   int // The number of chars in IndnetVal; this accounts for tabs.
 	// The new line sequence to use. If this isn't created with New, which
 	// sets it to '\n', it must be set by the user.
-	NewLine []byte
+	NewLine string
+	// this value may include a zero-width NBSP if Unwrappable. This one is used
+	// for the actual insertion of newlines. The exported version is used as the
+	// user settable one and also for replacing existing new lines. This
+	// differentiation is necessary in the case of Unwrappable to help ensure
+	// that the wrapped line is unwrapped properly.
+	newLine string
 	r       strings.Reader
 	runes   []rune // line buffer
 	buf     bytes.Buffer
@@ -84,6 +103,13 @@ func (w Wrap) Line(s string) (string, error) {
 	}
 	w.reset(s)
 
+	// set the new line chars to be inserted
+	if w.Unwrappable {
+		w.newLine = string(zeroNBSP) + w.NewLine
+	} else {
+		w.newLine = w.NewLine
+	}
+
 	if w.Indent { // If indenting lines; figure out the actual indent width.
 		for _, v := range w.IndentVal {
 			if v == '\t' {
@@ -100,21 +126,16 @@ func (w Wrap) Line(s string) (string, error) {
 	space := true
 	for {
 		space = !space // flip what we are looking for
-		cerr := w.chunk(space)
-		if cerr != nil && cerr != io.EOF {
-			return s, cerr
-		}
-		if !space {
-			if w.l+len(w.runes) >= w.Length { // if adding this chunk would exceed line length; emit a newline
-				err := w.newLine()
-				if err != nil {
-					return s, err
-				}
-			}
-		} else {
+		var rerr error // error from reading the runes
+		if space {
 			// Process the space chunk; any new line sequences in this chunk will
 			// be respected. The actual new line sequnce gets replaced with the
 			// configured sequence.
+			rerr = w.spaces()
+			if rerr != nil && rerr != io.EOF {
+				return s, rerr
+			}
+
 			err := w.processSpaceChunk()
 			if err != nil {
 				return s, err
@@ -128,24 +149,34 @@ func (w Wrap) Line(s string) (string, error) {
 					}
 				}
 			}
+		} else {
+			rerr = w.word()
+			if rerr != nil && rerr != io.EOF {
+				return s, rerr
+			}
+			if w.l+len(w.runes) >= w.Length { // if adding this chunk would exceed line length; emit a newline
+				err := w.writeNewLine()
+				if err != nil {
+					return s, err
+				}
+			}
 		}
-
 		_, err := w.buf.WriteString(string(w.runes))
 		if err != nil {
 			return s, err
 		}
 		// If the last chunk processed ended with an io.EOF, we're done.
-		if cerr != nil && cerr == io.EOF {
+		if rerr != nil && rerr == io.EOF {
 			return w.buf.String(), nil // If EOF was reached, return what we have.
 		}
 		w.l += len(w.runes)
 	}
 }
 
-// Write out the new line + indent, if applicable.
-func (w *Wrap) newLine() error {
+// Write out the new line + indent,
+func (w *Wrap) writeNewLine() error {
 	w.l = 0 // a newline results in reseting the line counter
-	_, err := w.buf.Write(w.NewLine)
+	_, err := w.buf.WriteString(w.newLine)
 	if err != nil {
 		return err
 	}
@@ -159,18 +190,9 @@ func (w *Wrap) newLine() error {
 	return nil
 }
 
-// chunk gets a chunk of chars; either whitespace or non-whitespace.
-func (w *Wrap) chunk(space bool) error {
-	// reset the rune cache
-	w.runes = w.runes[:0]
-	if space {
-		return w.spaces()
-	}
-	return w.word()
-}
-
 // a word is a series of runes until a separator char is encountered
 func (w *Wrap) word() error {
+	w.runes = w.runes[:0]
 	for {
 		ch, _, err := w.r.ReadRune()
 		if err != nil {
@@ -197,6 +219,7 @@ func (w *Wrap) word() error {
 // spaces returns all space characters between two words; unicode.IsSpace is used to
 // evaluate if the rune is a space.
 func (w *Wrap) spaces() error {
+	w.runes = w.runes[:0]
 	for {
 		ch, _, err := w.r.ReadRune()
 		if err != nil {
@@ -232,10 +255,20 @@ func (w *Wrap) processSpaceChunk() error {
 				return err
 			}
 
-			err = w.newLine()
+			if w.Unwrappable {
+				_, err = w.buf.WriteString(w.NewLine)
+				if err != nil {
+					return err
+				}
+				w.l = 0
+				goto shift
+			}
+			err = w.writeNewLine()
 			if err != nil {
 				return err
 			}
+		shift:
+			// set the rune run accordingly
 			if !w.Indent {
 				if winLine {
 					i++ // move forward the index to account for the prior back up.
@@ -254,13 +287,47 @@ func (w *Wrap) processSpaceChunk() error {
 
 	if !nl { // if there wasn't a nl see if this chunk exceeds the line
 		if w.l+len(w.runes) >= w.Length {
-			err := w.newLine()
+			err := w.writeNewLine()
 			if err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+// Unwrap unwraps a wrapped string: all new line chars inserted by Wrap.Line
+// will be elided. The resulting string will be returned.
+func Unwrap(s string) string {
+	b := make([]byte, 0, len(s))
+	r := make([]byte, 4) // for encoding rune
+	var elide bool
+	for _, v := range s {
+		if v == zeroNBSP { // zero-width no-break space probably starts a seq
+			elide = true
+			// mark the start of the sequence. There is a chance that zero-width no-break
+			// space doesn't mark the start of an inserted new line sequence.
+			continue
+		}
+		if elide { // if this is part of a zero-width no-break space sequence
+			if v == cr { // a carriage return is
+				continue
+			}
+			if v == lf {
+				// reset the info
+				elide = false
+				continue
+			}
+			// the zero-width no-break space didn't delimit an inserted sequence so
+			// write it out to preserve original string.
+			n := utf8.EncodeRune(r, zeroNBSP)
+			b = append(b, r[:n]...)
+			elide = false
+		}
+		n := utf8.EncodeRune(r, v)
+		b = append(b, r[:n]...)
+	}
+	return string(b[:len(b)])
 }
 
 // isSpace corrects (from the perspective of this package) some invalid
