@@ -26,9 +26,10 @@ import (
 )
 
 const (
-	zeroNBSP = '\ufeff' // Zero-width no break space
-	cr       = '\r'
-	lf       = '\n'
+	zeroNBSP      = '\ufeff' // Zero-width no break space
+	cr            = '\r'
+	lf            = '\n'
+	CommentPrefix = "// "
 )
 
 var (
@@ -61,11 +62,16 @@ type Wrap struct {
 	// differentiation is necessary in the case of Unwrappable to help ensure
 	// that the wrapped line is unwrapped properly.
 	newLine string
-	r       strings.Reader
-	runes   []rune // line buffer
-	newNL   bool   //if the last thing done was a nl: for whitespace elision
-	buf     bytes.Buffer
-	l       int // the length of the current line
+	// lineComment, when set all lines are prefixed with "// ". IndentVal
+	// should not be set then LineComment is enabled as it will be set during
+	// the setting of lineComment (see LineComment()).
+	lineComment bool
+
+	r     strings.Reader
+	runes []rune // line buffer
+	newNL bool   //if the last thing done was a nl: for whitespace elision
+	buf   bytes.Buffer
+	l     int // the length of the current line
 }
 
 // New returns a new Wrap with default Length and TabWidth.
@@ -73,11 +79,28 @@ func New() Wrap {
 	return Wrap{Length: LineLength, TabSize: TabSize, NewLine: string(lf), newLine: string(lf)}
 }
 
-// Reset's the wrapper and sets its reader to the string to be wrapped.
+// Reset's the wrapper and sets its reader to the string to be wrapped. NewLine,
+// Indent, IndentVal, TabSize, and lineComment settings are not affected.
 func (w *Wrap) reset(s string) {
 	w.r.Reset(s)
 	w.buf.Reset()
 	w.runes = w.runes[:0]
+}
+
+// LineComment set whether or not the text to be wrapped should be treated as
+// line comments. If enabled, Indent will be set to true and IndentVal will be
+// set to the CommentPreifx. If unset, Indent and IndentVal will not be affected
+// and the text to be wrapped will not be treated as line comments.
+//
+// The difference between enabling line comments and setting Indent values is
+// that only wrapped lines are indented, the first line is not, while line
+// comments prefixes every line with the line comment prefix, e.g. IndentVal.
+func (w *Wrap) LineComment(b bool) {
+	if b {
+		w.Indent = true
+		w.IndentVal = CommentPrefix
+	}
+	w.lineComment = b
 }
 
 // Line inserts a new line at Length. If the position is a non-Unicode space
@@ -120,6 +143,16 @@ func (w Wrap) Line(s string) (string, error) {
 		}
 	}
 
+	// if this is being transformed to a line comment; the first line needs to
+	// be prefixed with the CommentPrefix and the length counter needs to be
+	// updated.
+	if w.lineComment {
+		n, err := w.buf.WriteString(CommentPrefix)
+		if err != nil {
+			return s, err
+		}
+		w.l = n
+	}
 	// Whether or not the chunk is unicode spaces. This starts as true because
 	// the bool is negated at the top of the loop and we assume that it starts
 	// with chars and not whitespaces.
@@ -154,11 +187,12 @@ func (w Wrap) Line(s string) (string, error) {
 		}
 
 		// process non-whitespace runs
-
+		w.newNL = false // set to false because chars are being processed
 		rerr = w.word()
 		if rerr != nil && rerr != io.EOF {
 			return s, rerr
 		}
+
 		if w.l+len(w.runes) >= w.Length { // if adding this chunk would exceed line length; emit a newline
 			err := w.writeNewLine()
 			if err != nil {
