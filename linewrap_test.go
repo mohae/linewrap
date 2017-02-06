@@ -47,6 +47,7 @@ func TestWrapLine(t *testing.T) {
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, true, "\t", "\n", "hello\n\tΧαίρετε\t\t\n\tЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, false, "    ", "\n", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, false, "\t", "\n", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
+
 		// 30
 		{"Reality is\u00A0frequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u00A0frequently \ninaccurate."},
 		{"Reality is\u00a0frequently inaccurate.", 20, 4, false, "", "\n", "Reality \nis\u00a0frequently \ninaccurate."},
@@ -92,6 +93,7 @@ func TestWrapLine(t *testing.T) {
 	}
 }
 
+/*
 func TestUnwrappable(t *testing.T) {
 	tests := []struct {
 		s       string
@@ -170,3 +172,41 @@ func TestIsHyphen(t *testing.T) {
 		}
 	}
 }
+
+func TestProcessSpaceChunk(t *testing.T) {
+	suffix := "uvwxyz"
+	tests := []struct {
+		line     string
+		length   int
+		val      string
+		expected string
+	}{
+		{"", 10, "", "uvwxyz"},
+		{"Tallamore", 10, "    ", "Tallamore\n    uvwxyz"},
+		{"Tallamore", 10, "\n    ", "Tallamore\n    uvwxyz"},
+		{"Monaco", 10, "\t   ", "Monaco\n\t   uvwxyz"},
+		{"Monaco", 10, "\t   \n", "Monaco\t   \nuvwxyz"},
+		{"Firenza", 10, "\t\n\n", "Firenza\t\n\nuvwxyz"},
+		{"Amsterdam", 10, "\n\n", "Amsterdam\n\nuvwxyz"},
+		{"Modena", 10, "  \n \n  ", "Modena  \n \n  uvwxyz"},
+	}
+	for i, test := range tests {
+		w := New()
+		w.Length = test.length
+		w.buf.WriteString(test.line)
+		w.l = w.buf.Len()
+		for _, r := range test.val {
+			w.runes = append(w.runes, r)
+		}
+		err := w.processSpaceChunk()
+		if err != nil {
+			t.Errorf("%d: unexpected error: %s", i, err)
+			continue
+		}
+		w.buf.WriteString(suffix)
+		if w.buf.String() != test.expected {
+			t.Errorf("%d: got %q want %q", i, w.buf.String(), test.expected)
+		}
+	}
+}
+*/

@@ -34,7 +34,6 @@ const (
 var (
 	LineLength = 80
 	TabSize    = 5
-	NewLine    = "\n"
 )
 
 // Wrap processes strings into wrapped lines. If the wrapped lines are indented,
@@ -64,13 +63,14 @@ type Wrap struct {
 	newLine string
 	r       strings.Reader
 	runes   []rune // line buffer
+	newNL   bool   //if the last thing done was a nl: for whitespace elision
 	buf     bytes.Buffer
 	l       int // the length of the current line
 }
 
 // New returns a new Wrap with default Length and TabWidth.
 func New() Wrap {
-	return Wrap{Length: LineLength, TabSize: TabSize, NewLine: NewLine}
+	return Wrap{Length: LineLength, TabSize: TabSize, NewLine: string(lf), newLine: string(lf)}
 }
 
 // Reset's the wrapper and sets its reader to the string to be wrapped.
@@ -125,6 +125,7 @@ func (w Wrap) Line(s string) (string, error) {
 	// with chars and not whitespaces.
 	space := true
 	for {
+		w.runes = w.runes[:0]
 		space = !space // flip what we are looking for
 		var rerr error // error from reading the runes
 		if space {
@@ -149,18 +150,24 @@ func (w Wrap) Line(s string) (string, error) {
 					}
 				}
 			}
-		} else {
-			rerr = w.word()
-			if rerr != nil && rerr != io.EOF {
-				return s, rerr
-			}
-			if w.l+len(w.runes) >= w.Length { // if adding this chunk would exceed line length; emit a newline
-				err := w.writeNewLine()
-				if err != nil {
-					return s, err
-				}
-			}
+			continue
 		}
+
+		// process non-whitespace runs
+
+		rerr = w.word()
+		if rerr != nil && rerr != io.EOF {
+			return s, rerr
+		}
+		if w.l+len(w.runes) >= w.Length { // if adding this chunk would exceed line length; emit a newline
+			err := w.writeNewLine()
+			if err != nil {
+				return s, err
+			}
+			// since chars will be written next; this flag can be reset as it's for whitespace elision on indent
+			w.newNL = false
+		}
+
 		_, err := w.buf.WriteString(string(w.runes))
 		if err != nil {
 			return s, err
@@ -176,12 +183,13 @@ func (w Wrap) Line(s string) (string, error) {
 // Write out the new line + indent,
 func (w *Wrap) writeNewLine() error {
 	w.l = 0 // a newline results in reseting the line counter
+	w.newNL = true
 	_, err := w.buf.WriteString(w.newLine)
 	if err != nil {
 		return err
 	}
 	if w.Indent {
-		w.buf.WriteString(w.IndentVal)
+		_, err = w.buf.WriteString(w.IndentVal)
 		if err != nil {
 			return err
 		}
@@ -192,13 +200,12 @@ func (w *Wrap) writeNewLine() error {
 
 // a word is a series of runes until a separator char is encountered
 func (w *Wrap) word() error {
-	w.runes = w.runes[:0]
 	for {
-		ch, _, err := w.r.ReadRune()
+		r, _, err := w.r.ReadRune()
 		if err != nil {
 			return err
 		}
-		if isSpace(ch) {
+		if isSpace(r) {
 			// back up because we only return the word, not the separator
 			err = w.r.UnreadRune()
 			if err != nil {
@@ -206,11 +213,11 @@ func (w *Wrap) word() error {
 			}
 			return nil
 		}
-		w.runes = append(w.runes, ch)
+		w.runes = append(w.runes, r)
 		// a hyphen is included with a chunk of non-whitespace chars but causes
 		// a chunk boundary just in case there's a wrap after the hyphen but
 		// before the end of the next chunk.
-		if isHyphen(ch) {
+		if isHyphen(r) {
 			return nil
 		}
 	}
@@ -219,13 +226,12 @@ func (w *Wrap) word() error {
 // spaces returns all space characters between two words; unicode.IsSpace is used to
 // evaluate if the rune is a space.
 func (w *Wrap) spaces() error {
-	w.runes = w.runes[:0]
 	for {
-		ch, _, err := w.r.ReadRune()
+		r, _, err := w.r.ReadRune()
 		if err != nil {
 			return err
 		}
-		if !isSpace(ch) && !isHyphen(ch) {
+		if !isSpace(r) && !isHyphen(r) {
 			// back up because we only return the spaces, not non-Space chars
 			err = w.r.UnreadRune()
 			if err != nil {
@@ -234,64 +240,79 @@ func (w *Wrap) spaces() error {
 			return nil
 		}
 		// should actually be considered a space
-		w.runes = append(w.runes, ch)
+		w.runes = append(w.runes, r)
 	}
 }
 
 // process a chunk of runes that are a series of whitespace characters.
 func (w *Wrap) processSpaceChunk() error {
-	var nl bool
-	for i, r := range w.runes {
-		if r == '\n' {
-			nl = true
-			var winLine bool
-			// write the preceeding chars
-			if i > 0 && w.runes[i-1] == '\r' { // back up index to elide the \r
-				winLine = true
-				i--
-			}
-			_, err := w.buf.WriteString(string(w.runes[:i]))
-			if err != nil {
-				return err
-			}
+	var (
+		nl    bool
+		runes []rune // tmp runes
+		err   error
+	)
+	for _, r := range w.runes {
+		// \r aren't copied into the temp run
+		if r == '\r' {
+			continue
+		}
+		// if it's not a new line, append the char to the current run
+		if r != '\n' {
+			runes = append(runes, r)
+			continue
+		}
 
-			if w.Unwrappable {
-				_, err = w.buf.WriteString(w.NewLine)
-				if err != nil {
-					return err
-				}
-				w.l = 0
-				goto shift
-			}
-			err = w.writeNewLine()
+		// handle new line
+		nl = true
+		if len(runes) > 0 { // when there is a new line in a run of whitespace, the line may exceed length
+			_, err = w.buf.WriteString(string(runes))
 			if err != nil {
 				return err
 			}
-		shift:
-			// set the rune run accordingly
-			if !w.Indent {
-				if winLine {
-					i++ // move forward the index to account for the prior back up.
-				}
-				if i == len(w.runes) {
-					w.runes = w.runes[:0]
-				} else {
-					w.runes = w.runes[i+1:]
-				}
-			} else {
-				w.runes = w.runes[:0]
+			runes = runes[:0]
+		}
+		if w.Unwrappable {
+			_, err = w.buf.WriteString(w.NewLine)
+			if err != nil {
+				return err
 			}
-			//return w.processSpaceChunk()
+			w.l = 0
+			continue
+		}
+		err = w.writeNewLine()
+		if err != nil {
+			return err
+		}
+		if w.Indent { // if indented, any spaces after the new line are ignored
+			runes = runes[:0]
 		}
 	}
-
 	if !nl { // if there wasn't a nl see if this chunk exceeds the line
-		if w.l+len(w.runes) >= w.Length {
+		if w.l+len(runes) >= w.Length {
 			err := w.writeNewLine()
 			if err != nil {
 				return err
 			}
+			// after a new line, if it is indented, remaining spaces are ignored
+			if w.Indent {
+				return nil
+			}
+
 		}
+	}
+	// If a newline was just written and new lines are indented; remaining
+	// whitespaces are not written.
+	if w.newNL && w.Indent {
+		w.newNL = false
+		return nil
+	}
+	w.newNL = false
+	if len(runes) > 0 { // If there is something to write.
+		_, err = w.buf.WriteString(string(runes))
+		if err != nil {
+			return err
+		}
+		w.l += len(runes)
 	}
 	return nil
 }
