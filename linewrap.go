@@ -20,7 +20,6 @@ package linewrap
 import (
 	"bytes"
 	"io"
-	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -67,7 +66,7 @@ type Wrap struct {
 	// the setting of lineComment (see LineComment()).
 	lineComment bool
 
-	r     strings.Reader
+	r     bytes.Reader
 	runes []rune // line buffer
 	newNL bool   //if the last thing done was a nl: for whitespace elision
 	buf   bytes.Buffer
@@ -81,8 +80,8 @@ func New() Wrap {
 
 // Reset's the wrapper and sets its reader to the string to be wrapped. NewLine,
 // Indent, IndentVal, TabSize, and lineComment settings are not affected.
-func (w *Wrap) reset(s string) {
-	w.r.Reset(s)
+func (w *Wrap) reset(v []byte) {
+	w.r.Reset(v)
 	w.buf.Reset()
 	w.runes = w.runes[:0]
 }
@@ -124,6 +123,20 @@ func (w Wrap) Line(s string) (string, error) {
 	if s == "" { // if the string is empty, no comment
 		return s, nil
 	}
+	b, err := w.Bytes([]byte(s))
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// Wrap bytes and return the wrapped bytes
+func (w *Wrap) Bytes(s []byte) (b []byte, err error) {
+	if len(s) == 0 { // if the string is empty, no comment
+		return s, nil
+	}
+
+	// reset Wrap stuff
 	w.reset(s)
 
 	// set the new line chars to be inserted
@@ -208,7 +221,7 @@ func (w Wrap) Line(s string) (string, error) {
 		}
 		// If the last chunk processed ended with an io.EOF, we're done.
 		if rerr != nil && rerr == io.EOF {
-			return w.buf.String(), nil // If EOF was reached, return what we have.
+			return w.buf.Bytes(), nil // If EOF was reached, return what we have.
 		}
 		w.l += len(w.runes)
 	}
