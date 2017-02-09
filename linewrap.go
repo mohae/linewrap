@@ -29,11 +29,8 @@ const (
 	cr            = '\r'
 	lf            = '\n'
 	CommentPrefix = "// "
-)
-
-var (
-	LineLength = 80
-	TabSize    = 5
+	lineLength    = 80
+	tabSize       = 5
 )
 
 // Wrap processes strings into wrapped lines. If the wrapped lines are indented,
@@ -75,7 +72,7 @@ type Wrap struct {
 
 // New returns a new Wrap with default Length and TabWidth.
 func New() Wrap {
-	return Wrap{Length: LineLength, TabSize: TabSize, NewLine: string(lf), newLine: string(lf)}
+	return Wrap{Length: lineLength, TabSize: tabSize, NewLine: string(lf), newLine: string(lf)}
 }
 
 // Reset's the wrapper and sets its reader to the string to be wrapped. NewLine,
