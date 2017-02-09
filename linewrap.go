@@ -20,6 +20,7 @@ package linewrap
 import (
 	"bytes"
 	"io"
+	"sync"
 	"unicode"
 	"unicode/utf8"
 )
@@ -31,6 +32,12 @@ const (
 	CommentPrefix = "// "
 	lineLength    = 80
 	tabSize       = 5
+)
+
+var (
+	// package global
+	stdWrap = New()
+	mu      sync.Mutex
 )
 
 // Wrap processes strings into wrapped lines. If the wrapped lines are indented,
@@ -481,4 +488,108 @@ func is16(ranges []unicode.Range16, r uint16) bool {
 		}
 	}
 	return false
+}
+
+// package global funcs: these all use the package global sync.
+
+// LineComment set whether or not the text to be wrapped should be treated as
+// line comments. If enabled, Indent will be set to true and IndentVal will be
+// set to the CommentPreifx. If unset, Indent and IndentVal will not be affected
+// and the text to be wrapped will not be treated as line comments.
+//
+// The difference between enabling line comments and setting Indent values is
+// that only wrapped lines are indented, the first line is not, while line
+// comments prefixes every line with the line comment prefix, e.g. IndentVal.
+func LineComment(b bool) {
+	mu.Lock()
+	stdWrap.LineComment(b)
+	mu.Unlock()
+}
+
+// Line inserts a new line at Length. If the position is a non-Unicode space
+// character, the new line is inserted at the position of the last space
+// character. New line sequences in the text will be replaced with the
+// Wrap.NewLine sequence.
+//
+// If the line length boundary occurs within a sequence of white space chars,
+// there is a new line sequence within the whitespace sequence, and the
+// sequence of whitespaces preceeding the new line would exceed the desired
+// line length, those whitespace chars are allowed to spill over the line
+// length to prevent a new line, a sequence of spaces, and another new line
+// from occurring. If wrapped lines are to be indented any whitespace chars
+// after the newline and prior to non-whitespace chars are elided and replaced
+// with the IndentVal. This will result in loss of some white space chars. If
+// this is undesirable behavior, set Indent to false.
+//
+// The resulting string is returned. If an error occurs, both the original
+// string and the error are returned.
+func Line(s string) (string, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	return stdWrap.Line(s)
+}
+
+// Wrap bytes and return the wrapped bytes
+func Bytes(s []byte) (b []byte, err error) {
+	mu.Lock()
+	defer mu.Unlock()
+	return stdWrap.Bytes(s)
+}
+
+// Length sets the number of characters in each line. The length will not be
+// updated if n <= 0.
+func Length(n int) {
+	if n <= 0 {
+		return
+	}
+	mu.Lock()
+	stdWrap.Length = n
+	mu.Unlock()
+}
+
+// TabSize sets the number of characters that should be added for each tab
+// encountered. The tab size will not be updated if n <= 0.
+func TabSize(n int) {
+	if n <= 0 {
+		return
+	}
+	mu.Lock()
+	stdWrap.Length = n
+	mu.Unlock()
+}
+
+// Indent sets if wrapped lines should be indented.
+func Indent(b bool) {
+	mu.Lock()
+	stdWrap.Indent = b
+	mu.Unlock()
+}
+
+// IndentVal sets the string used to indent the wrapped lines if the wrapped
+// lines are to be indented.
+func IndentVal(v string) {
+	mu.Lock()
+	stdWrap.IndentVal = v
+	mu.Unlock()
+}
+
+// Unwrappable sets if the wrapped lines should be made unwrappable. For
+// unwrappable lines, a no-break space, \uFEFF, is inserted at the wrap-points.
+// This setting is mutually exclusive with the LineComments and Indent settings.
+func Unwrappable(b bool) {
+	mu.Lock()
+	stdWrap.Unwrappable = b
+	mu.Unlock()
+}
+
+// NewLine sets the newline sequence to be used when lines are wrapped. If the
+// NewLine sequence isn't \r, \n, pr \r\n, new line will not be updated.
+func NewLine(s string) {
+	if s != "\n" || s != "\r" || s != "\r\n" {
+		return
+	}
+	mu.Lock()
+	stdWrap.NewLine = s
+	mu.Unlock()
+
 }

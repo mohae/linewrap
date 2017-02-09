@@ -237,9 +237,9 @@ You should have received a copy of the GNU General Public License along with thi
 // this program; if not, write to the Free Software Foundation, Inc., 51 
 // Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
-	w := New()
-	w.LineComment(true)
-	cmt, err := w.Line(gpl20)
+	// use the global
+	LineComment(true)
+	cmt, err := Line(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
