@@ -78,8 +78,8 @@ type Wrap struct {
 }
 
 // New returns a new Wrap with default Length and TabWidth.
-func New() Wrap {
-	return Wrap{Length: lineLength, TabSize: tabSize, NewLine: string(lf), newLine: string(lf)}
+func New() *Wrap {
+	return &Wrap{Length: lineLength, TabSize: tabSize, NewLine: string(lf), newLine: string(lf)}
 }
 
 // Reset's the wrapper and sets its reader to the string to be wrapped. NewLine,
@@ -123,7 +123,7 @@ func (w *Wrap) LineComment(b bool, c string) {
 //
 // The resulting string is returned. If an error occurs, both the original
 // string and the error are returned.
-func (w Wrap) Line(s string) (string, error) {
+func (w *Wrap) Line(s string) (string, error) {
 	if s == "" { // if the string is empty, no comment
 		return s, nil
 	}
@@ -142,7 +142,6 @@ func (w *Wrap) Bytes(s []byte) (b []byte, err error) {
 
 	// reset Wrap stuff
 	w.reset(s)
-
 	// set the new line chars to be inserted
 	if w.Unwrappable {
 		w.newLine = string(zeroNBSP) + w.NewLine
@@ -163,20 +162,19 @@ func (w *Wrap) Bytes(s []byte) (b []byte, err error) {
 	// if this is being transformed to a line comment; the first line needs to
 	// be prefixed with the CommentPrefix and the length counter needs to be
 	// updated.
-	if w.lineComment {
+	if w.lineComment && len(w.IndentVal) != 0 {
 		n, err := w.buf.WriteString(w.IndentVal)
 		if err != nil {
 			return s, err
 		}
 		w.l = n
-		if len(w.IndentVal) > 0 {
-			w.l++
-			err := w.buf.WriteByte(' ')
-			if err != nil {
-				return s, err
-			}
+		w.l++
+		err = w.buf.WriteByte(' ')
+		if err != nil {
+			return s, err
 		}
 	}
+
 	// Whether or not the chunk is unicode spaces. This starts as true because
 	// the bool is negated at the top of the loop and we assume that it starts
 	// with chars and not whitespaces.
@@ -193,7 +191,6 @@ func (w *Wrap) Bytes(s []byte) (b []byte, err error) {
 			if rerr != nil && rerr != io.EOF {
 				return s, rerr
 			}
-
 			err := w.processSpaceChunk()
 			if err != nil {
 				return s, err
@@ -246,7 +243,8 @@ func (w *Wrap) writeNewLine() error {
 	if err != nil {
 		return err
 	}
-	if w.Indent {
+
+	if w.Indent && len(w.IndentVal) > 0 {
 		_, err = w.buf.WriteString(w.IndentVal)
 		if err != nil {
 			return err
@@ -318,6 +316,12 @@ func (w *Wrap) processSpaceChunk() error {
 		runes []rune // tmp runes
 		err   error
 	)
+	// if a new line was just done and we are doing line comments the space
+	// chunk starting a new line is ignored.
+	if w.newNL && w.lineComment {
+		return nil
+	}
+
 	for _, r := range w.runes {
 		// \r aren't copied into the temp run
 		if r == '\r' {
@@ -361,7 +365,7 @@ func (w *Wrap) processSpaceChunk() error {
 				return err
 			}
 			// after a new line, if it is indented, remaining spaces are ignored
-			if w.Indent {
+			if w.Indent || w.lineComment {
 				return nil
 			}
 
@@ -371,6 +375,7 @@ func (w *Wrap) processSpaceChunk() error {
 	// whitespaces are not written.
 	if w.newNL && w.Indent {
 		w.newNL = false
+		w.runes = w.runes[:0]
 		return nil
 	}
 	w.newNL = false
