@@ -238,7 +238,7 @@ You should have received a copy of the GNU General Public License along with thi
 // Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
 	// use the global
-	LineComment(true)
+	LineComment(true, "//")
 	cmt, err := Line(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)

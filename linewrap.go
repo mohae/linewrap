@@ -65,16 +65,16 @@ type Wrap struct {
 	// differentiation is necessary in the case of Unwrappable to help ensure
 	// that the wrapped line is unwrapped properly.
 	newLine string
-	// lineComment, when set all lines are prefixed with "// ". IndentVal
-	// should not be set then LineComment is enabled as it will be set during
-	// the setting of lineComment (see LineComment()).
-	lineComment bool
-
-	r     bytes.Reader
-	runes []rune // line buffer
-	newNL bool   //if the last thing done was a nl: for whitespace elision
-	buf   bytes.Buffer
-	l     int // the length of the current line
+	// lineComment, when set all lines are prefixed with the comment prefix.
+	// IndentVal should not be set then LineComment is enabled as it will be set
+	// but LineComment().
+	lineComment   bool
+	CommentPrefix string
+	r             bytes.Reader
+	runes         []rune // line buffer
+	newNL         bool   //if the last thing done was a nl: for whitespace elision
+	buf           bytes.Buffer
+	l             int // the length of the current line
 }
 
 // New returns a new Wrap with default Length and TabWidth.
@@ -92,16 +92,16 @@ func (w *Wrap) reset(v []byte) {
 
 // LineComment set whether or not the text to be wrapped should be treated as
 // line comments. If enabled, Indent will be set to true and IndentVal will be
-// set to the CommentPreifx. If unset, Indent and IndentVal will not be affected
-// and the text to be wrapped will not be treated as line comments.
+// set to c. If unset, Indent and IndentVal will not be affected and the text
+// to be wrapped will not be treated as line comments.
 //
 // The difference between enabling line comments and setting Indent values is
 // that only wrapped lines are indented, the first line is not, while line
 // comments prefixes every line with the line comment prefix, e.g. IndentVal.
-func (w *Wrap) LineComment(b bool) {
+func (w *Wrap) LineComment(b bool, c string) {
 	if b {
 		w.Indent = true
-		w.IndentVal = CommentPrefix
+		w.IndentVal = c
 	}
 	w.lineComment = b
 }
@@ -245,6 +245,15 @@ func (w *Wrap) writeNewLine() error {
 			return err
 		}
 		w.l = w.indentLen
+	}
+	// if line comments add a space after the indent (line comment marker) as comments
+	// don't have the text immediately after the delimiter, like this block.
+	if w.lineComment && len(w.IndentVal) > 0 {
+		w.l++
+		err = w.buf.WriteByte(' ')
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -494,15 +503,15 @@ func is16(ranges []unicode.Range16, r uint16) bool {
 
 // LineComment set whether or not the text to be wrapped should be treated as
 // line comments. If enabled, Indent will be set to true and IndentVal will be
-// set to the CommentPreifx. If unset, Indent and IndentVal will not be affected
-// and the text to be wrapped will not be treated as line comments.
+// set to c. If unset, Indent and IndentVal will not be affected and the text
+// to be wrapped will not be treated as line comments.
 //
 // The difference between enabling line comments and setting Indent values is
 // that only wrapped lines are indented, the first line is not, while line
 // comments prefixes every line with the line comment prefix, e.g. IndentVal.
-func LineComment(b bool) {
+func LineComment(b bool, c string) {
 	mu.Lock()
-	stdWrap.LineComment(b)
+	stdWrap.LineComment(b, c)
 	mu.Unlock()
 }
 
