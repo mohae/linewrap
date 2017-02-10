@@ -164,11 +164,18 @@ func (w *Wrap) Bytes(s []byte) (b []byte, err error) {
 	// be prefixed with the CommentPrefix and the length counter needs to be
 	// updated.
 	if w.lineComment {
-		n, err := w.buf.WriteString(CommentPrefix)
+		n, err := w.buf.WriteString(w.IndentVal)
 		if err != nil {
 			return s, err
 		}
 		w.l = n
+		if len(w.IndentVal) > 0 {
+			w.l++
+			err := w.buf.WriteByte(' ')
+			if err != nil {
+				return s, err
+			}
+		}
 	}
 	// Whether or not the chunk is unicode spaces. This starts as true because
 	// the bool is negated at the top of the loop and we assume that it starts

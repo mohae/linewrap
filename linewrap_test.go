@@ -257,3 +257,49 @@ You should have received a copy of the GNU General Public License along with thi
 		}
 	}
 }
+
+// This is to validate that making a line comment block out of text works.
+// This is different than regular indent behavior in that the first line is
+// also indented.
+func TestLineWrapLefJustify(t *testing.T) {
+	gpl20 := `Copyright (C) yyyy name of author
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
+
+	expected := `Copyright (C) yyyy name of author
+This program is free software; you can redistribute it and/or modify it under 
+the terms of the GNU General Public License as published by the Free Software 
+Foundation; version 2.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with 
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin 
+Street, Fifth Floor, Boston, MA 02110-1301, USA.`
+
+	// use the globala
+	w := New()
+	w.LineComment(true, "")
+	cmt, err := w.Line(gpl20)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	gots := strings.Split(cmt, "\n")
+	wants := strings.Split(expected, "\n")
+	if len(gots) != len(wants) {
+		t.Errorf("got %d lines; want %d", len(gots), len(wants))
+		t.Errorf("got %q\nwant %q", cmt, expected)
+		return
+	}
+	for i, got := range gots {
+		if got != wants[i] {
+			t.Errorf("%d: got %q want %q", i, got, wants[i])
+		}
+	}
+}
