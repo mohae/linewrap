@@ -1,5 +1,5 @@
 # linewrap
-[![GoDoc](https://godoc.org/github.com/mohae/linewrap?status.svg)](https://godoc.org/github.com/mohae/linewrap)[![Build Status](https://travis-ci.org/mohae/linewrap.png)](https://travis-ci.org/mohae/linewrap)
+[![GoDoc](https://godoc.org/github.com/mohae/linewrap?status.svg)](https://godoc.org/github.com/mohae/linewrap)[![Build Status](https://travis-ci.org/mohae/linewrap.png)](https://travis-ci.org/mohae/linewrap)  
 Wraps either a string or a byte slice so that each line doesn't exceed the specified number of characters. The wrapping can be done in an unwrappable manner, have wrapped lines be indented, or remove all white spaces around the wrapped lines. A character is defined as a unicode code point, not a byte.
 
 If wrapping is done in an unwrappable manner, a zero-space no break space, `U+FEFF`, will be inserted prior to any inserted new line characters. This allows `Unwrap` to detect inserted new line characters and elide them while preserving any pre-existing new line characters. When a line is being wrapped in a unwrappable, all existing white spaces are preserved with the possible exception of new line characters. Since new line characters can be replaced during wrapping, e.g. `\r\n` replaced by `\n`, the original values cannot be restored as there is no way of determining what the original new line characters were.
