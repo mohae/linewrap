@@ -28,7 +28,7 @@ import (
 const (
 	zeroNBSP      = '\ufeff' // Zero-width no break space
 	cr            = '\r'
-	lf            = '\n'
+	nl            = '\n'
 	CommentPrefix = "// "
 	lineLength    = 80
 	tabSize       = 5
@@ -79,7 +79,7 @@ type Wrap struct {
 
 // New returns a new Wrap with default Length and TabWidth.
 func New() *Wrap {
-	return &Wrap{Length: lineLength, TabSize: tabSize, NewLine: string(lf), newLine: string(lf)}
+	return &Wrap{Length: lineLength, TabSize: tabSize, NewLine: string(nl), newLine: string(nl)}
 }
 
 // Reset's the wrapper and sets its reader to the string to be wrapped. NewLine,
@@ -406,7 +406,7 @@ func Unwrap(s string) string {
 			if v == cr { // a carriage return is
 				continue
 			}
-			if v == lf {
+			if v == nl {
 				// reset the info
 				elide = false
 				continue
