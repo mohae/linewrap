@@ -12,6 +12,7 @@ type Pos int
 type token struct {
 	typ   tokenType
 	pos   Pos
+	len   int // kength in chars (not bytes)
 	value string
 }
 
@@ -151,6 +152,7 @@ type lexer struct {
 	start      Pos        // start position of this item
 	width      Pos        // width of last rune read from input
 	lastPos    Pos        // position of most recent item returned by nextItem
+	runeCnt    int        // the number of runes in the current token sequence
 	tokens     chan token // channel of scanned tokens
 	commentTyp CommentType
 }
@@ -175,28 +177,32 @@ func (l *lexer) accept(valid string) bool {
 // backup steps back one rune. Can be called only once per call of next.
 func (l *lexer) backup() {
 	l.pos -= l.width
+	l.runeCnt--
 }
 
 // emit passes an item back to the client.
 func (l *lexer) emit(t tokenType) {
-	l.tokens <- token{t, l.start, string(l.input[l.start:l.pos])}
+	l.tokens <- token{t, l.start, l.runeCnt, string(l.input[l.start:l.pos])}
 	l.start = l.pos
+	l.runeCnt = 0
 }
 
 // error returns an error token and terminates the scan by passing back a nil
 // pointer that will be the next state, terminating l.run.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.tokens <- token{tokenError, l.start, fmt.Sprintf(format, args...)}
+	l.tokens <- token{tokenError, l.start, 0, fmt.Sprintf(format, args...)}
 	return nil
 }
 
 // ignore skips over the pending input before this point.
 func (l *lexer) ignore() {
 	l.start = l.pos
+	l.runeCnt = 0
 }
 
 // next returns the next rune in the input.
 func (l *lexer) next() rune {
+	l.runeCnt++
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
 		return eof
@@ -292,6 +298,7 @@ func lexNewLine(l *lexer) stateFn {
 		l.emit(tokenText)
 	}
 	l.pos += Pos(len(string(nl)))
+	l.runeCnt++
 	l.emit(tokenNL)
 	return lexText
 }

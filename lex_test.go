@@ -10,55 +10,55 @@ type lexTest struct {
 // token{tokenEOF, 0, ""}
 
 var lexTests = []lexTest{
-	{"", []token{token{tokenEOF, 0, ""}}},
-	{"hello world", []token{{tokenText, 0, "hello"}, {tokenSpace, 5, " "}, {tokenText, 6, "world"}, token{tokenEOF, 11, ""}}},
+	{"", []token{token{tokenEOF, 0, 0, ""}}},
+	{"hello world", []token{{tokenText, 0, 5, "hello"}, {tokenSpace, 5, 1, " "}, {tokenText, 6, 5, "world"}, token{tokenEOF, 11, 0, ""}}},
 	{"Time is an illusion. Lunchtime doubly so.",
 		[]token{
-			{tokenText, 0, "Time"}, {tokenSpace, 4, " "}, {tokenText, 5, "is"}, {tokenSpace, 7, " "},
-			{tokenText, 8, "an"}, {tokenSpace, 10, " "}, {tokenText, 11, "illusion."}, {tokenSpace, 20, " "},
-			{tokenText, 21, "Lunchtime"}, {tokenSpace, 30, " "}, {tokenText, 31, "doubly"}, {tokenSpace, 37, " "},
-			{tokenText, 38, "so."}, token{tokenEOF, 41, ""},
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenSpace, 20, 1, " "},
+			{tokenText, 21, 9, "Lunchtime"}, {tokenSpace, 30, 1, " "}, {tokenText, 31, 6, "doubly"}, {tokenSpace, 37, 1, " "},
+			{tokenText, 38, 3, "so."}, token{tokenEOF, 41, 0, ""},
 		},
 	},
 	{"Time is an illusion.\u2001Lunchtime doubly so.",
 		[]token{
-			{tokenText, 0, "Time"}, {tokenSpace, 4, " "}, {tokenText, 5, "is"}, {tokenSpace, 7, " "},
-			{tokenText, 8, "an"}, {tokenSpace, 10, " "}, {tokenText, 11, "illusion."}, {tokenEmQuad, 20, "\u2001"},
-			{tokenText, 23, "Lunchtime"}, {tokenSpace, 32, " "}, {tokenText, 33, "doubly"}, {tokenSpace, 39, " "},
-			{tokenText, 40, "so."}, token{tokenEOF, 43, ""},
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenEmQuad, 20, 1, "\u2001"},
+			{tokenText, 23, 9, "Lunchtime"}, {tokenSpace, 32, 1, " "}, {tokenText, 33, 6, "doubly"}, {tokenSpace, 39, 1, " "},
+			{tokenText, 40, 3, "so."}, token{tokenEOF, 43, 0, ""},
 		},
 	},
 	{"Time is an illusion.\u2014Lunchtime doubly so.",
 		[]token{
-			{tokenText, 0, "Time"}, {tokenSpace, 4, " "}, {tokenText, 5, "is"}, {tokenSpace, 7, " "},
-			{tokenText, 8, "an"}, {tokenSpace, 10, " "}, {tokenText, 11, "illusion."}, {tokenEmDash, 20, "\u2014"},
-			{tokenText, 23, "Lunchtime"}, {tokenSpace, 32, " "}, {tokenText, 33, "doubly"}, {tokenSpace, 39, " "},
-			{tokenText, 40, "so."}, token{tokenEOF, 43, ""},
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenEmDash, 20, 1, "\u2014"},
+			{tokenText, 23, 9, "Lunchtime"}, {tokenSpace, 32, 1, " "}, {tokenText, 33, 6, "doubly"}, {tokenSpace, 39, 1, " "},
+			{tokenText, 40, 3, "so."}, token{tokenEOF, 43, 0, ""},
 		},
 	},
 
 	{"Time is an illusion.-Lunchtime doubly so.",
 		[]token{
-			{tokenText, 0, "Time"}, {tokenSpace, 4, " "}, {tokenText, 5, "is"}, {tokenSpace, 7, " "},
-			{tokenText, 8, "an"}, {tokenSpace, 10, " "}, {tokenText, 11, "illusion."}, {tokenHyphenMinus, 20, "-"},
-			{tokenText, 21, "Lunchtime"}, {tokenSpace, 30, " "}, {tokenText, 31, "doubly"}, {tokenSpace, 37, " "},
-			{tokenText, 38, "so."}, token{tokenEOF, 41, ""},
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenHyphenMinus, 20, 1, "-"},
+			{tokenText, 21, 9, "Lunchtime"}, {tokenSpace, 30, 1, " "}, {tokenText, 31, 6, "doubly"}, {tokenSpace, 37, 1, " "},
+			{tokenText, 38, 3, "so."}, token{tokenEOF, 41, 0, ""},
 		},
 	},
 	{"Time is an illusion.\nLunchtime doubly so.",
 		[]token{
-			{tokenText, 0, "Time"}, {tokenSpace, 4, " "}, {tokenText, 5, "is"}, {tokenSpace, 7, " "},
-			{tokenText, 8, "an"}, {tokenSpace, 10, " "}, {tokenText, 11, "illusion."}, {tokenNL, 20, "\n"},
-			{tokenText, 21, "Lunchtime"}, {tokenSpace, 30, " "}, {tokenText, 31, "doubly"}, {tokenSpace, 37, " "},
-			{tokenText, 38, "so."}, token{tokenEOF, 41, ""},
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenNL, 20, 1, "\n"},
+			{tokenText, 21, 9, "Lunchtime"}, {tokenSpace, 30, 1, " "}, {tokenText, 31, 6, "doubly"}, {tokenSpace, 37, 1, " "},
+			{tokenText, 38, 3, "so."}, token{tokenEOF, 41, 0, ""},
 		},
 	},
 	{"Time is an illusion.\r\nLunchtime doubly so.",
 		[]token{
-			{tokenText, 0, "Time"}, {tokenSpace, 4, " "}, {tokenText, 5, "is"}, {tokenSpace, 7, " "},
-			{tokenText, 8, "an"}, {tokenSpace, 10, " "}, {tokenText, 11, "illusion."}, {tokenNL, 21, "\n"},
-			{tokenText, 22, "Lunchtime"}, {tokenSpace, 31, " "}, {tokenText, 32, "doubly"}, {tokenSpace, 38, " "},
-			{tokenText, 39, "so."}, token{tokenEOF, 42, ""},
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenNL, 21, 1, "\n"},
+			{tokenText, 22, 9, "Lunchtime"}, {tokenSpace, 31, 1, " "}, {tokenText, 32, 6, "doubly"}, {tokenSpace, 38, 1, " "},
+			{tokenText, 39, 3, "so."}, token{tokenEOF, 42, 0, ""},
 		},
 	},
 }
@@ -88,6 +88,10 @@ func equal(t *testing.T, i int, i1, i2 []token) {
 		}
 		if i1[k].value != i2[k].value {
 			t.Errorf("%d:%d:value: got %v want %v", i, k, i1[k].value, i2[k].value)
+			continue
+		}
+		if i1[k].len != i2[k].len {
+			t.Errorf("%d:%d:len: got %v want %v", i, k, i1[k].len, i2[k].len)
 			continue
 		}
 		if i1[k].pos != i2[k].pos {
