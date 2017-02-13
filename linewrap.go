@@ -17,8 +17,6 @@
 
 package linewrap
 
-import "sync"
-
 const (
 	LineLength            = 80 // default line length
 	TabSize               = 8  // default tab size
@@ -39,12 +37,6 @@ const (
 	CommentSlash             // Line comment starting with //
 	CommentHash              // Line comment starting with #
 	CommentBlock             // Block comment delimited by /* and */
-)
-
-var (
-	// package global
-	stdWrap = New()
-	mu      sync.Mutex
 )
 
 // Wrapper wraps lines so that the output is lines of Length characters or less.
