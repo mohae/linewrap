@@ -257,9 +257,10 @@ func lexSpace(l *lexer) stateFn {
 		if !isSpace(tkn) {
 			break
 		}
-		l.emit(tkn)
+		//		l.emit(tkn)
 	}
 	l.backup()
+	l.emit(tokenSpace)
 	return lexText
 }
 
@@ -329,7 +330,6 @@ func lexText(l *lexer) stateFn {
 		if isHyphen(tkn) {
 			return lexHyphen
 		}
-
 		l.next()
 	}
 

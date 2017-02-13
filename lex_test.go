@@ -23,7 +23,7 @@ var lexTests = []lexTest{
 	{"Time is an illusion.\u2001Lunchtime doubly so.",
 		[]token{
 			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
-			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenEmQuad, 20, 1, "\u2001"},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenSpace, 20, 1, "\u2001"},
 			{tokenText, 23, 9, "Lunchtime"}, {tokenSpace, 32, 1, " "}, {tokenText, 33, 6, "doubly"}, {tokenSpace, 39, 1, " "},
 			{tokenText, 40, 3, "so."}, token{tokenEOF, 43, 0, ""},
 		},
