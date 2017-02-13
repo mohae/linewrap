@@ -254,7 +254,7 @@ func lexSpace(l *lexer) stateFn {
 		if !ok {
 			break
 		}
-		if tkn < tokenSpace || tkn > tokenIdeographicSpace {
+		if !isSpace(tkn) {
 			break
 		}
 		l.emit(tkn)
@@ -275,7 +275,7 @@ func lexHyphen(l *lexer) stateFn {
 		if !ok {
 			break
 		}
-		if tkn < tokenHyphenMinus || tkn > tokenSubScriptMinus {
+		if !isHyphen(tkn) {
 			break
 		}
 		l.emit(tkn)
@@ -323,10 +323,10 @@ func lexText(l *lexer) stateFn {
 		case tokenNL:
 			return lexNewLine
 		}
-		if tkn >= tokenSpace && tkn <= tokenIdeographicSpace { // this is the most likely so it's explicitly checked here
+		if isSpace(tkn) { // this is the most likely so it's explicitly checked here
 			return lexSpace
 		}
-		if tkn >= tokenHyphenMinus && tkn <= tokenSubScriptMinus {
+		if isHyphen(tkn) {
 			return lexHyphen
 		}
 
@@ -339,4 +339,18 @@ func lexText(l *lexer) stateFn {
 	}
 	l.emit(tokenEOF) // Useful to make EOF a token
 	return nil       // Stop the run loop.
+}
+
+func isSpace(t tokenType) bool {
+	if t >= tokenSpace && t <= tokenIdeographicSpace {
+		return true
+	}
+	return false
+}
+
+func isHyphen(t tokenType) bool {
+	if t >= tokenHyphenMinus && t <= tokenSubScriptMinus {
+		return true
+	}
+	return false
 }
