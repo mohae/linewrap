@@ -157,15 +157,6 @@ var key = map[string]tokenType{
 	"\uFF0D": tokenFullWidthHyphenMinus,
 }
 
-type CommentType int
-
-const (
-	None         CommentType = iota
-	CommentSlash             // Line comment starting with //
-	CommentHash              // Line comment starting with #
-	CommentBlock             // Block comment delimited by /* and */
-)
-
 const eof = -1
 
 type stateFn func(*lexer) stateFn
