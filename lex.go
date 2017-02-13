@@ -83,6 +83,12 @@ const (
 	//   wavy dash    U+301C does not cause a line break
 	//   wavy dash    U+3939 does not cause a line break
 	//   two em dash  U+2E3A is not in table but is here.
+	//   three em dash  U+2E3B is not in table but is here.
+	//   presentation form for vertical em dash U+FE31 is not in table but is here.
+	//   presentation form for vertical en dash U+FE32 is not in table but is here.
+	//   small em dash U+FE58 is not in table but is here.
+	//   small hyphen-minus is not in table but is here.
+	//   full width hyphen-minus is not in table but is here.
 	tokenHyphenMinus // U+002D
 
 	tokenSoftHyphen          // U+00AD
@@ -97,8 +103,15 @@ const (
 	tokenSwungDash        // U+2053
 	tokenSuperscriptMinus // U+207B
 
-	tokenSubScriptMinus // U+208B
-	tokenTwoEmDash      // U+2E3A
+	tokenSubScriptMinus                    // U+208B
+	tokenTwoEmDash                         // U+2E3A
+	tokenThreeEmDash                       // U+2E3B
+	tokenPresentationFormForVerticalEmDash // U+FE31
+	tokenPresentationFormForVerticalEnDash // U+FE32
+
+	tokenSmallEmDash          // U+FE58
+	tokenSmallHyphenMinus     // U+FE63
+	tokenFullWidthHyphenMinus // U+FF0D
 )
 
 var key = map[string]tokenType{
@@ -136,6 +149,12 @@ var key = map[string]tokenType{
 	"\u207B": tokenSuperscriptMinus,
 	"\u208B": tokenSubScriptMinus,
 	"\u2E3A": tokenTwoEmDash,
+	"\u2E3B": tokenThreeEmDash,
+	"\uFE31": tokenPresentationFormForVerticalEmDash,
+	"\uFE32": tokenPresentationFormForVerticalEnDash,
+	"\uFE58": tokenSmallEmDash,
+	"\uFE63": tokenSmallHyphenMinus,
+	"\uFF0D": tokenFullWidthHyphenMinus,
 }
 
 type CommentType int
@@ -366,7 +385,7 @@ func isSpace(t tokenType) bool {
 }
 
 func isHyphen(t tokenType) bool {
-	if t >= tokenHyphenMinus && t <= tokenTwoEmDash {
+	if t >= tokenHyphenMinus && t <= tokenFullWidthHyphenMinus {
 		return true
 	}
 	return false

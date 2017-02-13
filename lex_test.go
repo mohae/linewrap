@@ -116,3 +116,53 @@ func TestLex(t *testing.T) {
 		equal(t, i, tokens, test.tokens)
 	}
 }
+
+func TestIsHyphen(t *testing.T) {
+	tests := []struct {
+		r rune
+		b bool
+	}{
+		{'\u0020', false},
+		{'\u2011', false},
+		{'\u207b', true},
+		{'\u208b', true},
+		{'\u002d', true},
+		{'\u007e', false},
+		{'\u00ad', true},
+		{'\u058a', true},
+		{'\u05be', false},
+		{'\u1400', false},
+		{'\u1806', true},
+		{'\u2010', true},
+		{'\u2012', true},
+		{'\u2013', true},
+		{'\u2014', true},
+		{'\u2015', true},
+		{'\u2053', true},
+		{'\u2212', false},
+		{'\u2e17', false},
+		{'\u2e3a', true},
+		{'\u2e3b', true},
+		{'\u301c', false},
+		{'\u3030', false},
+		{'\u30a0', false},
+		{'\ufe31', true},
+		{'\ufe32', true},
+		{'\ufe58', true},
+		{'\ufe63', true},
+		{'\uff0d', true},
+	}
+	for _, test := range tests {
+		tkn, ok := key[string(test.r)]
+		if !ok { // anything not in the key map should be false
+			if test.b != ok {
+				t.Errorf("%q: got %t want %t", string(test.r), ok, test.b)
+			}
+			continue
+		}
+		b := isHyphen(tkn)
+		if b != test.b {
+			t.Errorf("%x %c: got %t; want %t", test.r, test.r, b, test.b)
+		}
+	}
+}
