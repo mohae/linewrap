@@ -82,6 +82,7 @@ const (
 	//   minus sign   U+2212 does not cause a line break
 	//   wavy dash    U+301C does not cause a line break
 	//   wavy dash    U+3939 does not cause a line break
+	//   two em dash  U+2E3A is not in table but is here.
 	tokenHyphenMinus // U+002D
 
 	tokenSoftHyphen          // U+00AD
@@ -97,6 +98,7 @@ const (
 	tokenSuperscriptMinus // U+207B
 
 	tokenSubScriptMinus // U+208B
+	tokenTwoEmDash      // U+2E3A
 )
 
 var key = map[string]tokenType{
@@ -133,6 +135,7 @@ var key = map[string]tokenType{
 	"\u2053": tokenSwungDash,
 	"\u207B": tokenSuperscriptMinus,
 	"\u208B": tokenSubScriptMinus,
+	"\u2E3A": tokenTwoEmDash,
 }
 
 type CommentType int
@@ -363,7 +366,7 @@ func isSpace(t tokenType) bool {
 }
 
 func isHyphen(t tokenType) bool {
-	if t >= tokenHyphenMinus && t <= tokenSubScriptMinus {
+	if t >= tokenHyphenMinus && t <= tokenTwoEmDash {
 		return true
 	}
 	return false
