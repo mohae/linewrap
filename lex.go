@@ -102,6 +102,7 @@ const (
 var key = map[string]tokenType{
 	"\n":     tokenNL,
 	"\r":     tokenCR,
+	"\t":     tokenTab,
 	"\uFEFF": tokenZeroWidthNoBreakSpace,
 	"\u0020": tokenSpace,
 	"\u1680": tokenOghamSpaceMark,
@@ -285,7 +286,7 @@ func lexHyphen(l *lexer) stateFn {
 	return lexText
 }
 
-// lexReturn handles a carriage return, `\r`.
+// lexReturn handles a carriage return, `\r`; these are skipped.
 func lexReturn(l *lexer) stateFn {
 	if l.pos > l.start {
 		l.emit(tokenText)
@@ -306,6 +307,17 @@ func lexNewLine(l *lexer) stateFn {
 	return lexText
 }
 
+// lexNewLine handles a tab line, `\t`
+func lexTab(l *lexer) stateFn {
+	if l.pos > l.start {
+		l.emit(tokenText)
+	}
+	l.pos += Pos(len(string(nl)))
+	l.runeCnt++
+	l.emit(tokenTab)
+	return lexText
+}
+
 // stateFn to process input and tokenize things
 func lexText(l *lexer) stateFn {
 	for {
@@ -323,6 +335,8 @@ func lexText(l *lexer) stateFn {
 			return lexReturn
 		case tokenNL:
 			return lexNewLine
+		case tokenTab:
+			return lexTab
 		}
 		if isSpace(tkn) { // this is the most likely so it's explicitly checked here
 			return lexSpace

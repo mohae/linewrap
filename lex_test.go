@@ -45,6 +45,14 @@ var lexTests = []lexTest{
 			{tokenText, 38, 3, "so."}, token{tokenEOF, 41, 0, ""},
 		},
 	},
+	{"Time is an illusion.\tLunchtime doubly so.",
+		[]token{
+			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
+			{tokenText, 8, 2, "an"}, {tokenSpace, 10, 1, " "}, {tokenText, 11, 9, "illusion."}, {tokenTab, 20, 1, "\t"},
+			{tokenText, 21, 9, "Lunchtime"}, {tokenSpace, 30, 1, " "}, {tokenText, 31, 6, "doubly"}, {tokenSpace, 37, 1, " "},
+			{tokenText, 38, 3, "so."}, token{tokenEOF, 41, 0, ""},
+		},
+	},
 	{"Time is an illusion.\nLunchtime doubly so.",
 		[]token{
 			{tokenText, 0, 4, "Time"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 2, "is"}, {tokenSpace, 7, 1, " "},
