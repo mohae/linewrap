@@ -39,7 +39,6 @@ const (
 	tokenNL   // \n
 	tokenCR   // \r
 
-	tokenTab                   // \t
 	tokenZeroWidthNoBreakSpace // U+FEFF used for unwrappable
 
 	// unicode tokens we care about, mostly because of breaking rules. The whitespace
@@ -52,6 +51,7 @@ const (
 	//   no-break space            U+00A0 is not considered whitespace for line break purposes
 	//   narrow no-break space     U+202F is not considered whitespace for line break purposes
 	//   zero width no-break space U+FEFF is not considered whitespace for line break purposes
+	tokenTab                     // \t
 	tokenSpace                   // U+0020
 	tokenOghamSpaceMark          // U+1680
 	tokenMongolianVowelSeparator // U+180E
@@ -369,7 +369,7 @@ func lexText(l *lexer) stateFn {
 }
 
 func isSpace(t tokenType) bool {
-	if t >= tokenSpace && t <= tokenIdeographicSpace {
+	if t >= tokenTab && t <= tokenIdeographicSpace {
 		return true
 	}
 	return false
