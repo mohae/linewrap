@@ -39,6 +39,7 @@ const (
 	tokenNL   // \n
 	tokenCR   // \r
 
+	tokenTab                   // \t
 	tokenZeroWidthNoBreakSpace // U+FEFF used for unwrappable
 
 	// unicode tokens we care about, mostly because of breaking rules. The whitespace
@@ -54,20 +55,20 @@ const (
 	tokenSpace                   // U+0020
 	tokenOghamSpaceMark          // U+1680
 	tokenMongolianVowelSeparator // U+180E
-	tokenEnQuad                  // U+2000
 
+	tokenEnQuad          // U+2000
 	tokenEmQuad          // U+2001
 	tokenEnSpace         // U+2002
 	tokenEmSpace         // U+2003
 	tokenThreePerEmSpace // U+2004
-	tokenFourPerEmSpace  // U+2005
 
+	tokenFourPerEmSpace   // U+2005
 	tokenSixPerEmSpace    // U+2006
 	tokenFigureSpace      // U+2007
 	tokenPunctuationSpace // U+2008
 	tokenThinSpace        // U+2009
-	tokenHairSpace        // U+200A
 
+	tokenHairSpace               // U+200A
 	tokenZeroWidthSpace          // U+200B
 	tokenMediumMathematicalSpace // U+205F
 	tokenIdeographicSpace        // U+3000
@@ -82,19 +83,20 @@ const (
 	//   wavy dash    U+301C does not cause a line break
 	//   wavy dash    U+3939 does not cause a line break
 	tokenHyphenMinus // U+002D
-	tokenSoftHyphen  // U+00AD
 
+	tokenSoftHyphen          // U+00AD
 	tokenArmenianHyphen      // U+058A
 	tokenMongolianTodoHyphen // U+1806 break before
 	tokenHyphen              // U+2010
 	tokenFigureDash          // U+2012
-	tokenEnDash              // U+2013
 
+	tokenEnDash           // U+2013
 	tokenEmDash           // U+2014 can be before or after
 	tokenHorizontalBar    // U+2015
 	tokenSwungDash        // U+2053
 	tokenSuperscriptMinus // U+207B
-	tokenSubScriptMinus   // U+208B
+
+	tokenSubScriptMinus // U+208B
 )
 
 var key = map[string]tokenType{
