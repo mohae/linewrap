@@ -29,8 +29,8 @@ const (
 var (
 	lineCommentSlash  = []byte("// ")
 	lineCommentHash   = []byte("# ")
-	blockCommentBegin = []byte("/*")
-	blockCommentEnd   = []byte("*/")
+	blockCommentBegin = []byte("/*\n") // the comment begin is on a separate line
+	blockCommentEnd   = []byte("*/\n") // the comment end
 )
 
 type CommentType int
@@ -130,6 +130,8 @@ func (w *Wrapper) Bytes(s []byte) (b []byte, err error) {
 	}
 
 done:
+	w.commentEnd()
+
 	return w.b, nil
 }
 
@@ -183,6 +185,14 @@ func (w *Wrapper) commentBegin() {
 		return
 	case CommentSlash, CommentHash:
 		w.lineComment()
+	case CommentBlock:
+		w.b = append(w.b, blockCommentBegin...)
+	}
+}
+
+func (w *Wrapper) commentEnd() {
+	if w.CommentType == CommentBlock {
+		w.b = append(w.b, blockCommentEnd...)
 	}
 }
 
