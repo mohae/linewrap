@@ -20,10 +20,6 @@ package linewrap
 const (
 	LineLength            = 80 // default line length
 	TabSize               = 8  // default tab size
-	lineCommentSlash      = "//"
-	lineCommentHash       = "#"
-	blockCommentBegin     = "/*"
-	blockCommentEnd       = "*/"
 	cr                    = '\r'
 	nl                    = '\n'
 	tab                   = '\t'
@@ -52,9 +48,9 @@ type Wrapper struct {
 	// wrapped new line char(s) will be kept.
 	Unwrappable bool
 	CommentType // the type of comment,
-
-	input []byte
-	l     int // the length of the current line, in chars
+	priorToken  token
+	input       []byte
+	l           int // the length of the current line, in chars
 	*lexer
 	b []byte
 }
@@ -90,23 +86,39 @@ func (w *Wrapper) Bytes(s []byte) (b []byte, err error) {
 	// odds are, it'll be at least the length of the input. This minimizes
 	// re-allocs.
 	w.b = make([]byte, 0, len(s))
+
+	var (
+		skip bool
+		tkn  token
+	)
+
 	w.lexer = newLexer(s)
 	go w.lexer.run()
 	for {
-		token := w.lexer.nextToken()
-		if token.typ == tokenEOF {
-			break
+		w.priorToken = tkn
+		tkn = w.lexer.nextToken()
+		switch tkn.typ {
+		case tokenSpace:
+			if w.priorToken.typ == tokenNL {
+				continue
+			}
+		case tokenNL:
+			w.nl()
+			continue
+		case tokenEOF:
+			goto done
+		case tokenError:
+			return w.b, tkn
 		}
-		if token.typ == tokenError {
-			return b, token
-		}
-		skip := w.wrap(&token)
+		skip = w.wrap(&tkn)
 		if skip {
 			continue
 		}
-		w.b = append(w.b, token.String()...)
-		w.l += token.len
+		w.b = append(w.b, tkn.String()...)
+		w.l += tkn.len
 	}
+
+done:
 	return w.b, nil
 }
 
@@ -141,13 +153,6 @@ func (w *Wrapper) setIndentLen() {
 
 // wrap figures out wrapping of line stuff
 func (w *Wrapper) wrap(t *token) (skip bool) {
-	if t.typ == tokenNL { // if this is a newline token, reset the length
-		// make the line length == Length so that the next token will trigger a
-		// newline; this handles trailing spaces.
-		w.l = w.Length
-		return true
-	}
-
 	if t.typ == tokenTab {
 		t.len = w.tabSize
 	}
@@ -159,10 +164,15 @@ func (w *Wrapper) wrap(t *token) (skip bool) {
 		return true
 	}
 	return false
-
 }
 
 func (w *Wrapper) nl() {
+	// see if the priorToken was a tokenSpace; if so back up to elide
+	// trailing spaces from the line prior to a nl
+	if w.priorToken.typ == tokenSpace {
+		w.b = w.b[:len(w.b)-w.priorToken.len]
+	}
+
 	w.b = append(w.b, nl)
 	w.l = 0
 	if w.indentLen > 0 {

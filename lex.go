@@ -33,7 +33,8 @@ func (t token) Error() string {
 type tokenType int
 
 const (
-	tokenError tokenType = iota
+	tokenNone tokenType = iota
+	tokenError
 	tokenEOF
 	tokenText // anything that isn't one of the following
 	tokenNL   // \n

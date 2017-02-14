@@ -14,22 +14,22 @@ func TestWrapLine(t *testing.T) {
 		{"Hello", 20, 4, "", "Hello"},
 		{"Hello World", 20, 4, "", "Hello World"},
 		{"This sentence is a\n meaningless one", 20, 4, "", "This sentence is a\nmeaningless one"},
-		{"This sentence is a \nmeaningless one", 20, 4, "", "This sentence is a \nmeaningless one"},
+		{"This sentence is a \nmeaningless one", 20, 4, "", "This sentence is a\nmeaningless one"},
 		// 5
 		{"This sentence is a\n meaningless one", 20, 4, "    ", "This sentence is a\n    meaningless one"},
 		{"This sentence is a\n meaningless one", 20, 4, "\t", "This sentence is a\n\tmeaningless one"},
 		{"This sentence is a\r\n meaningless one", 20, 4, "    ", "This sentence is a\n    meaningless one"},
 		{"This sentence is a\r\n meaningless one", 20, 4, "\t", "This sentence is a\n\tmeaningless one"},
-		{"This sentence isn't\r\n a meaningless one", 20, 4, "    ", "This sentence isn't\n    a meaningless \n    one"},
+		{"This sentence isn't\r\n a meaningless one", 20, 4, "    ", "This sentence isn't\n    a meaningless\n    one"},
 		// 10
-		{"This sentence isn't\r\n a meaningless one", 20, 4, "\t", "This sentence isn't\n\ta meaningless \n\tone"},
-		{"Reality is frequently inaccurate. One is never alone with a rubber duck.", 34, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber \nduck."},
-		{"Reality is frequently inaccurate. One is never alone with a rubber duck.", 35, 4, "", "Reality is frequently inaccurate. \nOne is never alone with a rubber \nduck."},
-		{"Reality is frequently inaccurate.     One is never alone with a rubber duck.", 34, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber \nduck."},
-		{"Reality is frequently inaccurate.     One is never alone with a rubber duck.", 35, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber \nduck."},
+		{"This sentence isn't\r\n a meaningless one", 20, 4, "\t", "This sentence isn't\n\ta meaningless\n\tone"},
+		{"Reality is frequently inaccurate. One is never alone with a rubber duck.", 34, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber\nduck."},
+		{"Reality is frequently inaccurate. One is never alone with a rubber duck.", 35, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber\nduck."},
+		{"Reality is frequently inaccurate.     One is never alone with a rubber duck.", 34, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber\nduck."},
+		{"Reality is frequently inaccurate.     One is never alone with a rubber duck.", 35, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber\nduck."},
 		// 15
-		{"Reality is frequently inaccurate.     One is never alone with a rubber duck.", 40, 4, "", "Reality is frequently inaccurate.     \nOne is never alone with a rubber duck."},
-		{"A common mistake\n that people make when trying to design something completely foolproof is to underestimate the ingenuity of complete fools.", 20, 4, "", "A common mistake\nthat people make \nwhen trying to \ndesign something \ncompletely \nfoolproof is to \nunderestimate the \ningenuity of \ncomplete fools."},
+		{"Reality is frequently inaccurate.     One is never alone with a rubber duck.", 40, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber duck."},
+		{"A common mistake\n that people make when trying to design something completely foolproof is to underestimate the ingenuity of complete fools.", 20, 4, "", "A common mistake\nthat people make\nwhen trying to\ndesign something\ncompletely\nfoolproof is to\nunderestimate the\ningenuity of\ncomplete fools."},
 		{"못\t알아\t듣겠어요\t전혀\t모르겠어요", 20, 4, "", "못\t알아\t듣겠어요\t\n전혀\t모르겠어요"},
 		{"못\t알아\t듣겠어요\t전혀\t모르겠어요", 20, 4, "    ", "못\t알아\t듣겠어요\t\n    전혀\t모르겠어요"},
 		{"못\t알아\t듣겠어요\t전혀\t모르겠어요", 20, 4, "\t", "못\t알아\t듣겠어요\t\n\t전혀\t모르겠어요"},
@@ -37,31 +37,25 @@ func TestWrapLine(t *testing.T) {
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, "", "hello\nΧαίρετε\t\t\nЗдравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, "    ", "hello\n    Χαίρετε\t\t\n    Здравствуйте"},
 		{"hello\nΧαίρετε\t\tЗдравствуйте", 20, 4, "\t", "hello\n\tΧαίρετε\t\t\n\tЗдравствуйте"},
-		{"Reality is\u00A0frequently inaccurate.", 20, 4, "", "Reality \nis\u00A0frequently \ninaccurate."},
-		{"Reality is\u00a0frequently inaccurate.", 20, 4, "", "Reality \nis\u00a0frequently \ninaccurate."},
+		{"Reality is\u00A0frequently inaccurate.", 20, 4, "", "Reality\nis\u00A0frequently\ninaccurate."},
+		{"Reality is\u00a0frequently inaccurate.", 20, 4, "", "Reality\nis\u00a0frequently\ninaccurate."},
 		// 25
-		{"Reality is\u2005frequently inaccurate.", 20, 4, "", "Reality is\u2005\nfrequently \ninaccurate."},
-		{"Reality is\u2001frequently inaccurate.", 20, 4, "", "Reality is\u2001\nfrequently \ninaccurate."},
-		{"Reality is\u200Bfrequently inaccurate.", 20, 4, "", "Reality is\u200B\nfrequently \ninaccurate."},
-		{"Reality is\u200bfrequently inaccurate.", 20, 4, "", "Reality is\u200b\nfrequently \ninaccurate."},
-		{"Reality is\u202Ffrequently inaccurate.", 20, 4, "", "Reality \nis\u202Ffrequently \ninaccurate."},
+		{"Reality is\u2005frequently inaccurate.", 20, 4, "", "Reality is\nfrequently\ninaccurate."},
+		{"Reality is\u2001frequently inaccurate.", 20, 4, "", "Reality is\nfrequently\ninaccurate."},
+		{"Reality is\u200bfrequently inaccurate.", 20, 4, "", "Reality is\nfrequently\ninaccurate."},
+		{"Reality is\u202Ffrequently inaccurate.", 20, 4, "", "Reality\nis\u202Ffrequently\ninaccurate."},
+		{"Reality is\uFEFFfrequently inaccurate.", 20, 4, "", "Reality\nis\uFEFFfrequently\ninaccurate."},
 		// 30
-		{"Reality is\u202ffrequently inaccurate.", 20, 4, "", "Reality \nis\u202ffrequently \ninaccurate."},
-		{"Reality is\uFEFFfrequently inaccurate.", 20, 4, "", "Reality \nis\uFEFFfrequently \ninaccurate."},
-		{"Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is.", 30, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind-bogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u00adbogglingly big it is.", 30, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind\u00adbogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u2011bogglingly big it is.", 30, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind\u2011bogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is.", 30, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind-bogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u00adbogglingly big it is.", 30, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u00adbogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u2011bogglingly big it is.", 30, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u2011bogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u207bbogglingly big it is.", 30, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u207bbogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u208bbogglingly big it is.", 30, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u208bbogglingly big it is."},
 		// 35
-		{"Space is big. You just won't believe how vastly, hugely, mind\u207bbogglingly big it is.", 30, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind\u207bbogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u208bbogglingly big it is.", 30, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind\u208bbogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u2e3abogglingly big it is.", 30, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind\u2e3abogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is.", 34, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, mind-\nbogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u00adbogglingly big it is.", 34, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, mind\u00ad\nbogglingly big it is."},
-		// 40
-		{"Space is big. You just won't believe how vastly, hugely, mind\u2011bogglingly big it is.", 34, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, \nmind\u2011bogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u207bbogglingly big it is.", 35, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, mind\u207b\nbogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u208bbogglingly big it is.", 35, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, mind\u208b\nbogglingly big it is."},
-		{"Space is big. You just won't believe how vastly, hugely, mind\u2e3abogglingly big it is.", 35, 4, "", "Space is big. You just won't \nbelieve how vastly, hugely, mind\u2e3a\nbogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u2e3abogglingly big it is.", 30, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u2e3abogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u00adbogglingly big it is.", 34, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely, mind\u00ad\nbogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u2011bogglingly big it is.", 34, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u2011bogglingly big it is."},
+		{"Space is big. You just won't believe how vastly, hugely, mind\u207bbogglingly big it is.", 35, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely, mind\u207b\nbogglingly big it is."},
 	}
 	for i, test := range tests {
 		w := New()
@@ -79,46 +73,11 @@ func TestWrapLine(t *testing.T) {
 	}
 }
 
-func TestUnwrappable(t *testing.T) {
-	tests := []struct {
-		s       string
-		newLine string
-		wrapped string
-	}{
-		{"This sentence is a meaningless one", "\n", "This sentence is a \ufeff\nmeaningless one"},
-		{"This sentence is a meaningless one", "\r\n", "This sentence is a \ufeff\r\nmeaningless one"},
-		{"This sentence isn't \na meaningless sentence", "\n", "This sentence isn't \na meaningless \ufeff\nsentence"},
-		{"This sentence isn't \r\na meaningless sentence", "\r\n", "This sentence isn't \r\na meaningless \ufeff\r\nsentence"},
-		{"A common mistake\n that people make \nwhen trying to \ndesign something\n completely foolproof is to underestimate the ingenuity of complete fools.", "\n", "A common mistake\n that people make \nwhen trying to \ndesign something\n completely \ufeff\nfoolproof is to \ufeff\nunderestimate the \ufeff\ningenuity of \ufeff\ncomplete fools."},
-
-		{"못\n알아\t듣겠어요\t전혀\t모르겠어요", "\n", "못\n알아\t듣겠어요\t\ufeff\n전혀\t모르겠어요"},
-		{"못\n알아\ufeff\t듣겠어요\t전혀\t모르겠어요", "\n", "못\n알아\ufeff\t듣겠어요\t\ufeff\n전혀\t모르겠어요"},
-		{"hello\nΧαίρετε\t\tЗдравствуйте", "\n", "hello\nΧαίρετε\t\t\ufeff\nЗдравствуйте"},
-	}
-	for i, test := range tests {
-		w := New()
-		w.Length = 20
-		w.Unwrappable = true
-		s, err := w.String(test.s)
-		if err != nil {
-			t.Errorf("%d: unexpected error: %q", i, err)
-			continue
-		}
-		if s != test.wrapped {
-			t.Errorf("wrap %d: got %q want %q", i, s, test.wrapped)
-		}
-		s = Unwrap(s)
-		if s != test.s {
-			t.Errorf("unwrap %d: got %q want %q", i, s, test.s)
-		}
-	}
-}
-
 /*
 // This is to validate that making a line comment block out of text works.
 // This is different than regular indent behavior in that the first line is
 // also indented.
-func TestCommenting(t *testing.T) {
+func TestLineComment(t *testing.T) {
 	gpl20 := `Copyright (C) yyyy name of author
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2.
 
@@ -140,9 +99,9 @@ You should have received a copy of the GNU General Public License along with thi
 // this program; if not, write to the Free Software Foundation, Inc., 51
 // Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
-	// use the global
-	LineComment(true, "//")
-	cmt, err := Line(gpl20)
+	w := New()
+	w.CommentType = CommentSlash
+	cmt, err := w.String(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
@@ -161,6 +120,7 @@ You should have received a copy of the GNU General Public License along with thi
 	}
 }
 
+/*
 // This is to validate that making a line comment block out of text works.
 // This is different than regular indent behavior in that the first line is
 // also indented.
