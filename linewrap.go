@@ -26,6 +26,13 @@ const (
 	zeroWidthNoBreakSpace = "\uFEFF"
 )
 
+var (
+	lineCommentSlash  = []byte("// ")
+	lineCommentHash   = []byte("# ")
+	blockCommentBegin = []byte("/*")
+	blockCommentEnd   = []byte("*/")
+)
+
 type CommentType int
 
 const (
@@ -86,6 +93,10 @@ func (w *Wrapper) Bytes(s []byte) (b []byte, err error) {
 	// odds are, it'll be at least the length of the input. This minimizes
 	// re-allocs.
 	w.b = make([]byte, 0, len(s))
+
+	// If there's a comment type; lead with that. If CommentType == none, nothing
+	// will be done.
+	w.commentBegin()
 
 	var (
 		skip bool
@@ -166,6 +177,36 @@ func (w *Wrapper) wrap(t *token) (skip bool) {
 	return false
 }
 
+func (w *Wrapper) commentBegin() {
+	switch w.CommentType {
+	case None:
+		return
+	case CommentSlash, CommentHash:
+		w.lineComment()
+	}
+}
+
+func (w *Wrapper) lineComment() bool {
+	switch w.CommentType {
+	case CommentSlash:
+		w.slashComment()
+		return true
+	case CommentHash:
+		w.hashComment()
+		return true
+	}
+	return false
+}
+func (w *Wrapper) hashComment() {
+	w.b = append(w.b, lineCommentHash...)
+	w.l = 2
+}
+
+func (w *Wrapper) slashComment() {
+	w.b = append(w.b, lineCommentSlash...)
+	w.l = 3
+}
+
 func (w *Wrapper) nl() {
 	// see if the priorToken was a tokenSpace; if so back up to elide
 	// trailing spaces from the line prior to a nl
@@ -175,6 +216,10 @@ func (w *Wrapper) nl() {
 
 	w.b = append(w.b, nl)
 	w.l = 0
+	b := w.lineComment() // add a new line if applicable
+	if b {               // if this is a line comment no indent is done
+		return
+	}
 	if w.indentLen > 0 {
 		w.b = append(w.b, w.indentText...)
 		w.l += w.indentLen

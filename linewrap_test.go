@@ -1,6 +1,9 @@
 package linewrap
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestWrapLine(t *testing.T) {
 	tests := []struct {
@@ -73,7 +76,6 @@ func TestWrapLine(t *testing.T) {
 	}
 }
 
-/*
 // This is to validate that making a line comment block out of text works.
 // This is different than regular indent behavior in that the first line is
 // also indented.
