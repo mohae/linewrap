@@ -171,7 +171,6 @@ type lexer struct {
 	lastPos    Pos        // position of most recent item returned by nextItem
 	runeCnt    int        // the number of runes in the current token sequence
 	tokens     chan token // channel of scanned tokens
-	commentTyp CommentType
 }
 
 func newLexer(input []byte) *lexer {
