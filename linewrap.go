@@ -224,6 +224,11 @@ func (w *Wrapper) nl() {
 		w.b = w.b[:len(w.b)-len(w.priorToken.value)]
 	}
 
+	// If a line comment see if the current line is a blank comment line and elide
+	// the trailing space if it is.
+	w.cleanBlankCommentLine()
+
+	// newline
 	w.b = append(w.b, nl)
 	w.l = 0
 	b := w.lineComment() // add a new line if applicable
@@ -235,4 +240,32 @@ func (w *Wrapper) nl() {
 		w.l += w.indentLen
 	}
 
+}
+
+// if the text is being wrapped as line comments and current line is a
+// blank comment line, e.g. // with no text, make sure the trailing space
+// is elided: "// " becomes "//" and "# " becomes "#"
+func (w *Wrapper) cleanBlankCommentLine() {
+	switch w.CommentType {
+	case CommentSlash:
+		w.cleanBlankSlashCommentLine()
+	case CommentHash:
+		w.cleanBlankHashCommentLine()
+	}
+}
+
+func (w *Wrapper) cleanBlankSlashCommentLine() {
+	if w.b[len(w.b)-1] == 0x20 {
+		if w.b[len(w.b)-2] == '/' && w.b[len(w.b)-3] == '/' {
+			w.b = w.b[:len(w.b)-1]
+		}
+	}
+}
+
+func (w *Wrapper) cleanBlankHashCommentLine() {
+	if w.b[len(w.b)-1] == 0x20 {
+		if w.b[len(w.b)-2] == '#' {
+			w.b = w.b[:len(w.b)-1]
+		}
+	}
 }
