@@ -221,7 +221,7 @@ func (w *Wrapper) nl() {
 	// see if the priorToken was a tokenSpace; if so back up to elide
 	// trailing spaces from the line prior to a nl
 	if w.priorToken.typ == tokenSpace {
-		w.b = w.b[:len(w.b)-w.priorToken.len]
+		w.b = w.b[:len(w.b)-len(w.priorToken.value)]
 	}
 
 	w.b = append(w.b, nl)
