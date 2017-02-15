@@ -18,8 +18,8 @@
 package linewrap
 
 const (
-	LineLength            = 80 // default line length
-	TabSize               = 8  // default tab size
+	LineLength = 80 // default line length
+	TabSize    = 8  // default tab size
 )
 
 var (
@@ -99,17 +99,14 @@ func (w *Wrapper) Bytes(s []byte) (b []byte, err error) {
 		tkn  token
 	)
 
-	w.lexer = newLexer(s)
-	go w.lexer.run()
+	w.lexer = lex(s)
 	for {
 		w.priorToken = tkn
 		tkn = w.lexer.nextToken()
-		select {
-		case token = <-l.tokens:
-			return token
-		default:
-			l.state = l.state(l)
-		}		switch tkn.typ {
+		if tkn.typ == tokenEOF { // if eof has been reached, stop processing
+			break
+		}
+		switch tkn.typ {
 		case tokenSpace:
 			if w.priorToken.typ == tokenNL {
 				continue
