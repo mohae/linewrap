@@ -1,36 +1,101 @@
 # linewrap
 [![GoDoc](https://godoc.org/github.com/mohae/linewrap?status.svg)](https://godoc.org/github.com/mohae/linewrap)[![Build Status](https://travis-ci.org/mohae/linewrap.png)](https://travis-ci.org/mohae/linewrap)  
-Wraps either a string or a byte slice so that each line doesn't exceed the specified number of characters. The wrapping can be done in an unwrappable manner, have wrapped lines be indented, or remove all white spaces around the wrapped lines. A character is defined as a unicode code point, not a byte.
+Wraps either a string or a byte slice so that each line doesn't exceed the specified number of characters. A character is defined as a unicode code point, not a byte. Any `\r` in the input will be elided.
 
-If wrapping is done in an unwrappable manner, a zero-space no break space, `U+FEFF`, will be inserted prior to any inserted new line characters. This allows `Unwrap` to detect inserted new line characters and elide them while preserving any pre-existing new line characters. When a line is being wrapped in a unwrappable, all existing white spaces are preserved with the possible exception of new line characters. Since new line characters can be replaced during wrapping, e.g. `\r\n` replaced by `\n`, the original values cannot be restored as there is no way of determining what the original new line characters were.
+Trailing and leading spaces on wrapped lines are elided.
 
-If wrapping is not done in an unwrappable manner, lines can be optionally indented using the configured `Wrap.Indent` value. When indenting isn't enabled, linewrap will preserve all white spaces in the string and only insert new line characters.
+Linewrap can also indent wrapped lines or format the input as comments:
 
-Linewrap calculates line length on a per character, or rune, basis with the exception of '\t', which is counted as TabSize spaces, which is configurable using `Wrap.TabSize`, for the sake of calculating the current line length. While the defined number of spaces for a tab _depends_, this is the best approximation that can be made in this situation. Alternatively, the tab can be replaced with `Wrap.TabSize` spaces. The new line character to use is also configurable using `Wrap.NewLine`. Any existing new line characters in the string  will be replaced with the `Wrap.NewLine` new line character and any inserted new line will also use `Wrap.NewLine`. This can be set on the package level, which will result in any `Wrap` created by `New` having those settings.
+    #      line comment
+	//     line comment
+	/* */  block comment
 
-If lines are indented the whitespace around the line-break is elided. The indent value is configurable using `Wrap.IndentVal`. Indenting is controlled by the `Wrap.Indent` bool.
+## References used:
+Jukka "Yucca" Korpela's unicode tables were used as the main references especially his line break page: https://www.cs.tut.fi/~jkorpela/unicode/linebr.html and his unicode spaces and dash pages listed in their respective sections in this document.
 
-Linewrap can also be used to create line-comment blocks out of text. If it is configured to do line comments the text will not be indented after a new line; all lines will be left justified.
+In addition, some of the symbols were pulled from http://www.unicode.org/reports/tr14/#Properties.
 
-The `Wrap` struct can be re-used.
+The list of symbols handled is not exhaustive.
+
 
 ## Hyphen and spaces
-Linewrap will wrap lines on unicode whitespace and hyphens.
+Linewrap will wrap lines on most unicode whitespace and dash characters, with some exceptions. Characters in the not considered list will not be considered points at which the input can be wrapped. If there are any characters that are unaccounted for, please file an issue or make a pull request. Before doing so, check the docs and/or the code to see if it has been already listed as an exception.
+
+The `\n` and `\t` characters are handled separately.  The width used for tabs is set by `Wrap.TabSize(int)`, which defaults to 8 spaces.
 
 ### Spaces
-Go's `unicode.IsSpace()` function is used to determine if a char is a whitespace character. Linewrap classifies a few code points differently than `unicode.IsSpace` does. These differences are shown in the table below.
+Whitespace tokens are mostly from https://www.cs.tut.fi/~jkorpela/chars/spaces.html
 
-code point|name|IsSpace  
+#### Not considered whitespace characters:
+code point|symbol name  
+--|:--  
+U+200B|zero width space  
+U+00A0|no-break space  
+U+202F|zero width no-break space  
+
+#### Whitespace characters
+code point|symbol name  
 --|:--|:--  
-U+200B|Zero Width Space|True  
-U+00A0|No-break Space|False  
-U+202F|Zero Width No-break Space|False
+U+0020|space  
+U+1680|ogham space mark  
+U+180E|mongolian vowel separator  
+U+2000|en quad  
+U+2001|em quad  
+U+2002|en space  
+U+2003|em space  
+U+2004|three per em space  
+U+2005|four per em space  
+U+2006|six per em space  
+U+2007|figure space  
+U+2008|punctuation space  
+U+2009|thin space  
+U+200A|hair space  
+U+200B|zero width space  
+U+205F|medium mathematical space  
+U+3000|ideographic space  
 
-### Hyphens
-Go's unicode.Dash range table, along with a few ASCII and extended ASCII code points, are used to determine if a char is a hyphen character. Linewrap classifies a few code points differently. These exceptions are shown in the table below.
+### Dashes (Hyphens)
+Dash tokens are mostly from dash tokens from https://www.cs.tut.fi/~jkorpela/dashes.html
 
-code point|symbol|name|IsHyphen  
---|:--:|:--|:--  
-U+2011|‑|No-break Hyphen|False  
-U+207B|⁻|Superscript Minus|False  
-U+208B|₋|Subscript Minus|False
+__Additional explanations to entries in the tables:__
+The `em dash (U+2014)` symbol can have a break before or after its occurrence but linewrap only breaks after its occurrence.
+
+The `hyphen minus (U+002D)` is not supposed to break on a numeric context but linewrap does not make such a differentiation.
+
+#### Dash characters not considered dashes  
+code point|symbol name  
+--|:--:  
+U+007E|tilde            U+007E  
+U+2212|minus sign       U+2212  
+U+301C|wavy dash        U+301C  
+U+3939|wavy dash        U+3939  
+U+2E3A|two em dash      U+2E3A  
+U+2E3B|three em dash    U+2E3B  
+U+FE58|small em dash    U+FE58  
+U+FE63|small hyphen-minus       U+FE63  
+U+FF0D|full width hyphen-minus  U+FF0D  
+U+1806|mongolian todo hyphen    U+1806  
+U+FE31|presentation form for vertical em dash  
+U+FE32|presentation form for vertical en dash  
+
+#### Dash characters
+code point|symbol name  
+--|:--:  
+U+002D|hyphen minus  
+U+00AD|soft hyphen  
+U+058A|armenian hyphen  
+U+2010|hyphen  
+U+2012|figure dash  
+U+2013|en dash  
+U+2014|em dash  
+U+2015|horizontal bar  
+U+2053|swung dash  
+U+207B|superscript mnus  
+U+208B|subscript minus  
+U+2E3A|two em dash  
+U+2E3B|three em dash  
+U+FE31|presentation form for vertical em dash  
+U+FE32|presentation form for vertical en dash  
+U+FE58|small em dash  
+U+FE63|small hyphen minus  
+U+FF0D|full width hyphen minus  
