@@ -183,11 +183,13 @@ type lexer struct {
 }
 
 func lex(input []byte) *lexer {
-	return &lexer{
+	l := &lexer{
 		input:  input,
 		state:  lexText,
 		tokens: make(chan token, 2),
 	}
+	go l.run()
+	return l
 }
 
 // next returns the next rune in the input.
