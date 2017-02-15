@@ -36,11 +36,10 @@ const (
 	tokenNone tokenType = iota
 	tokenError
 	tokenEOF
-	tokenText // anything that isn't one of the following
-	tokenNL   // \n
-	tokenCR   // \r
-
+	tokenText                  // anything that isn't one of the following
 	tokenZeroWidthNoBreakSpace // U+FEFF used for unwrappable
+	tokenNL                    // \n
+	tokenCR                    // \r
 
 	// unicode tokens we care about, mostly because of breaking rules. The whitespace
 	// and dash tokens listed may be different than what Go uses in the relevant Go
@@ -78,28 +77,28 @@ const (
 	// hyphens and dashes in lines breaking rules sections
 	//
 	// exceptions to the table:
-	//   tilde        U+007E does not cause a line break because of possibility of ~/dir, ~=, etc.
-	//   hyphen minus U+002D this is not supposed to break on a numeric context but no differentiation is done
-	//   minus sign   U+2212 does not cause a line break
-	//   wavy dash    U+301C does not cause a line break
-	//   wavy dash    U+3939 does not cause a line break
-	//   two em dash  U+2E3A is not in table but is here.
-	//   three em dash  U+2E3B is not in table but is here.
+	//   tilde            U+007E does not cause a line break because of possibility of ~/dir, ~=, etc.
+	//   hyphen minus     U+002D this is not supposed to break on a numeric context but no differentiation is done
+	//   minus sign       U+2212 does not cause a line break
+	//   wavy dash        U+301C does not cause a line break
+	//   wavy dash        U+3939 does not cause a line break
+	//   two em dash      U+2E3A is not in table but is here.
+	//   three em dash    U+2E3B is not in table but is here.
+	//   small em dash    U+FE58 is not in table but is here.
+	//   small hyphen-minus       U+FE63 is not in table but is here.
+	//   full width hyphen-minus  U+FF0D is not in table but is here.
+	//   mongolian todo hyphen    U+1806  does not cause a line break becaues it is a break before char
 	//   presentation form for vertical em dash U+FE31 is not in table but is here.
 	//   presentation form for vertical en dash U+FE32 is not in table but is here.
-	//   small em dash U+FE58 is not in table but is here.
-	//   small hyphen-minus is not in table but is here.
-	//   full width hyphen-minus is not in table but is here.
 	tokenHyphenMinus // U+002D
 
-	tokenSoftHyphen          // U+00AD
-	tokenArmenianHyphen      // U+058A
-	tokenMongolianTodoHyphen // U+1806 break before
-	tokenHyphen              // U+2010
-	tokenFigureDash          // U+2012
+	tokenSoftHyphen     // U+00AD
+	tokenArmenianHyphen // U+058A
+	tokenHyphen         // U+2010
+	tokenFigureDash     // U+2012
 
 	tokenEnDash           // U+2013
-	tokenEmDash           // U+2014 can be before or after
+	tokenEmDash           // U+2014 can be before or after but only after is supported here
 	tokenHorizontalBar    // U+2015
 	tokenSwungDash        // U+2053
 	tokenSuperscriptMinus // U+207B
@@ -116,8 +115,8 @@ const (
 )
 
 var key = map[string]tokenType{
-	"\n":     tokenNL,
 	"\r":     tokenCR,
+	"\n":     tokenNL,
 	"\t":     tokenTab,
 	"\uFEFF": tokenZeroWidthNoBreakSpace,
 	"\u0020": tokenSpace,
@@ -140,7 +139,6 @@ var key = map[string]tokenType{
 	"\u002D": tokenHyphenMinus,
 	"\u00AD": tokenSoftHyphen,
 	"\u058A": tokenArmenianHyphen,
-	"\u1806": tokenMongolianTodoHyphen,
 	"\u2010": tokenHyphen,
 	"\u2012": tokenFigureDash,
 	"\u2013": tokenEnDash,
@@ -160,60 +158,36 @@ var key = map[string]tokenType{
 
 const eof = -1
 
+const (
+	classText tokenClass = iota
+	classCR
+	classNL
+	classTab
+	classSpace
+	classHyphen
+)
+
+type tokenClass int
+
 type stateFn func(*lexer) stateFn
 
 type lexer struct {
-	input      []byte     // the string being scanned
-	state      stateFn    // the next lexing function to enter
-	pos        Pos        // current position of this item
-	start      Pos        // start position of this item
-	width      Pos        // width of last rune read from input
-	lastPos    Pos        // position of most recent item returned by nextItem
-	runeCnt    int        // the number of runes in the current token sequence
-	tokens     chan token // channel of scanned tokens
+	input   []byte     // the string being scanned
+	state   stateFn    // the next lexing function to enter
+	pos     Pos        // current position of this item
+	start   Pos        // start position of this item
+	width   Pos        // width of last rune read from input
+	lastPos Pos        // position of most recent item returned by nextItem
+	runeCnt int        // the number of runes in the current token sequence
+	tokens  chan token // channel of scanned tokens
 }
 
-func newLexer(input []byte) *lexer {
+func lex(input []byte) *lexer {
 	return &lexer{
 		input:  input,
 		state:  lexText,
 		tokens: make(chan token, 2),
 	}
-}
-
-// accept consumes the next rune if it's from the valid set.
-func (l *lexer) accept(valid string) bool {
-	if strings.IndexRune(valid, l.next()) >= 0 {
-		return true
-	}
-	l.backup()
-	return false
-}
-
-// backup steps back one rune. Can be called only once per call of next.
-func (l *lexer) backup() {
-	l.pos -= l.width
-	l.runeCnt--
-}
-
-// emit passes an item back to the client.
-func (l *lexer) emit(t tokenType) {
-	l.tokens <- token{t, l.start, l.runeCnt, string(l.input[l.start:l.pos])}
-	l.start = l.pos
-	l.runeCnt = 0
-}
-
-// error returns an error token and terminates the scan by passing back a nil
-// pointer that will be the next state, terminating l.run.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.tokens <- token{tokenError, l.start, 0, fmt.Sprintf(format, args...)}
-	return nil
-}
-
-// ignore skips over the pending input before this point.
-func (l *lexer) ignore() {
-	l.start = l.pos
-	l.runeCnt = 0
 }
 
 // next returns the next rune in the input.
@@ -229,23 +203,66 @@ func (l *lexer) next() rune {
 	return r
 }
 
-// nextToken returns the next token from the input.
-func (l *lexer) nextToken() token {
-	for {
-		select {
-		case token := <-l.tokens:
-			return token
-		default:
-			l.state = l.state(l)
-		}
-	}
-}
-
 // peek returns but does not consume the next rune in the input
 func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
 	return r
+}
+
+// backup steps back one rune. Can be called only once per call of next.
+func (l *lexer) backup() {
+	l.pos -= l.width
+	l.runeCnt--
+}
+
+// emit passes an item back to the client.
+func (l *lexer) emit(t tokenType) {
+	l.tokens <- token{t, l.start, l.runeCnt, string(l.input[l.start:l.pos])}
+	l.start = l.pos
+	l.runeCnt = 0
+}
+
+// ignore skips over the pending input before this point.
+func (l *lexer) ignore() {
+	l.start = l.pos
+	l.runeCnt = 0
+}
+
+// accept consumes the next rune if it's from the valid set.
+func (l *lexer) accept(valid string) bool {
+	if strings.ContainsRune(valid, l.next()) {
+		return true
+	}
+	l.backup()
+	return false
+}
+
+// acceptRun cunsumes a run of runes from the valid set.
+func (l *lexer) acceptRun(valid string) {
+	if strings.ContainsRune(valid, l.next()) {
+	}
+	l.backup()
+}
+
+// error returns an error token and terminates the scan by passing back a nil
+// pointer that will be the next state, terminating l.run.
+func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+	l.tokens <- token{tokenError, l.start, 0, fmt.Sprintf(format, args...)}
+	return nil
+}
+
+// nextToken returns the next token from the input.
+func (l *lexer) nextToken() token {
+	token := <-l.tokens
+	l.lastPos = token.pos
+	return token
+}
+
+// drain the channel so the lex go routine will exit: called by caller.
+func (l *lexer) drain() {
+	for range l.tokens {
+	}
 }
 
 // run lexes the input by executing state functions until the state is nil.
@@ -256,116 +273,148 @@ func (l *lexer) run() {
 	close(l.tokens) // No more tokens will be delivered
 }
 
-// scan until end of the space sequence is encountered
-func lexSpace(l *lexer) stateFn {
-	if l.pos > l.start {
-		l.emit(tokenText)
-	}
-	// scan until the spaces are consumed
-	for {
-		r := l.next()
-		tkn, ok := key[string(r)]
-		if !ok {
-			break
-		}
-		if !isSpace(tkn) {
-			break
-		}
-		//		l.emit(tkn)
-	}
-	l.backup()
-	l.emit(tokenSpace)
-	return lexText
-}
-
-// scan until end of the hyphen sequence is encountered
-func lexHyphen(l *lexer) stateFn {
-	if l.pos > l.start {
-		l.emit(tokenText)
-	}
-	// scan until the spaces are consumed
-	for {
-		r := l.next()
-		tkn, ok := key[string(r)]
-		if !ok {
-			break
-		}
-		if !isHyphen(tkn) {
-			break
-		}
-		l.emit(tkn)
-	}
-	l.backup()
-	return lexText
-}
-
-// lexReturn handles a carriage return, `\r`; these are skipped.
-func lexReturn(l *lexer) stateFn {
-	if l.pos > l.start {
-		l.emit(tokenText)
-	}
-	l.pos += Pos(len(string(cr)))
-	l.ignore()
-	return lexText
-}
-
-// lexNewLine handles a new line, `\n`
-func lexNewLine(l *lexer) stateFn {
-	if l.pos > l.start {
-		l.emit(tokenText)
-	}
-	l.pos += Pos(len(string(nl)))
-	l.runeCnt++
-	l.emit(tokenNL)
-	return lexText
-}
-
-// lexNewLine handles a tab line, `\t`
-func lexTab(l *lexer) stateFn {
-	if l.pos > l.start {
-		l.emit(tokenText)
-	}
-	l.pos += Pos(len(string(nl)))
-	l.runeCnt++
-	l.emit(tokenTab)
-	return lexText
-}
-
-// stateFn to process input and tokenize things
+// lexText scans non whitespace/hyphen chars.
 func lexText(l *lexer) stateFn {
 	for {
-		r := l.peek()
-		if r == eof {
+		is, class := l.atBreakPoint() // a breakpoint is any char after which a new line can be
+		if is {
+			if l.pos > l.start {
+				l.emit(tokenText)
+			}
+			switch class {
+			case classCR:
+				return lexCR
+			case classNL:
+				return lexNL
+			case classSpace:
+				return lexSpace
+			case classTab:
+				return lexTab
+			case classHyphen:
+				return lexHyphen
+			}
+		}
+		if l.next() == eof {
+			l.runeCnt-- // eof doesn't count.
 			break
 		}
-		tkn, ok := key[string(r)]
-		if !ok {
-			l.next()
-			continue
-		}
-		switch tkn {
-		case tokenCR:
-			return lexReturn
-		case tokenNL:
-			return lexNewLine
-		case tokenTab:
-			return lexTab
-		}
-		if isSpace(tkn) { // this is the most likely so it's explicitly checked here
-			return lexSpace
-		}
-		if isHyphen(tkn) {
-			return lexHyphen
-		}
-		l.next()
 	}
-
 	// Correctly reached EOF.
 	if l.pos > l.start {
 		l.emit(tokenText)
 	}
 	l.emit(tokenEOF) // Useful to make EOF a token
 	return nil       // Stop the run loop.
+}
+
+// a breakpoint is any character afterwhich a wrap may occur. If it is a
+// breakpoint char, the type of char is returned.
+func (l *lexer) atBreakPoint() (breakpoint bool, class tokenClass) {
+	r, _ := utf8.DecodeRune(l.input[l.pos:])
+	t, ok := key[string(r)]
+	if !ok || t <= tokenZeroWidthNoBreakSpace {
+		return false, classText
+	}
+	switch t {
+	case tokenCR:
+		return true, classCR
+	case tokenNL:
+		return true, classNL
+	case tokenTab:
+		return true, classTab
+	}
+	if isSpace(t) {
+		return true, classSpace
+	}
+	if isHyphen(t) {
+		return true, classHyphen
+	}
+	// it really shouldn't get to here, but if it does, treat it like classText
+	return false, classText
+}
+
+// lexCR handles a carriage return, `\r`; these are skipped. The prior token
+// should already have been emitted and the next token should be a CR, which
+// are skipped.  The next token is checked to ensure that it really is a CR.
+func lexCR(l *lexer) stateFn {
+	r := l.next()
+	t := key[string(r)] // don't need to check ok, as the zero value won't match
+	if t == tokenCR {
+		l.ignore()
+	}
+	return lexText
+}
+
+// lexNL handles a new line, `\n`; the prior token should already have been
+// emitted and the next token should be a NL. The next token is checked to
+// ensure that it really is a NL
+func lexNL(l *lexer) stateFn {
+	r := l.next()
+	t := key[string(r)] // don't need to check ok, as the zero value won't match
+	if t == tokenNL {
+		l.emit(tokenNL)
+	}
+	return lexText
+}
+
+// lexTab handles a tab, '\t'; the prior token should already have been emitted
+// and the next token should be a tab. The next token is checked to ensure that
+// it really is a tab.
+func lexTab(l *lexer) stateFn {
+	r := l.next()
+	t := key[string(r)] // don't need to check ok, as the zero value won't match
+	if t == tokenTab {
+		l.emit(tokenTab)
+	}
+	return lexText
+}
+
+// This scans until end of the space sequence is encountered. If no spaces were
+// found, nothing will be emitted. The prior token should already have been
+// emitted before this function gets called.
+func lexSpace(l *lexer) stateFn {
+	var i int
+	// scan until the spaces are consumed
+	for {
+		r := l.next()
+		// ok doesn't need to be checked as the zeroo value won't be classified as a hyphen.
+		tkn := key[string(r)]
+		if !isSpace(tkn) {
+			break
+		}
+		i++
+	}
+	if i == 0 { // if no spaces were processed; nothing to emit.
+		return lexText
+	}
+	// otherwise backup to ensure only space tokens are emitted.
+	l.backup()
+	l.emit(tokenSpace)
+	l.next()
+	return lexText
+}
+
+// Scan until end of the hyphen sequence is encountered. If no hyphens were
+// found, nothing will be emitted. The prior token should already have been
+// emitted before this function gets called.
+func lexHyphen(l *lexer) stateFn {
+	var i int
+	// scan until the spaces are consumed
+	for {
+		r := l.next()
+		// ok doesn't need to be checked as the zero value won't be classified as a hyphen.
+		tkn := key[string(r)]
+		if !isHyphen(tkn) {
+			break
+		}
+		i++
+	}
+	if i == 0 { // if no hyphens. nothing to emit.
+		return lexText
+	}
+	l.backup()
+	l.emit(tokenHyphen)
+	return lexText
 }
 
 func isSpace(t tokenType) bool {
