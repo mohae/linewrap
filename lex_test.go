@@ -68,6 +68,13 @@ var lexTests = []lexTest{
 			{tokenText, 39, 3, "so."}, token{tokenEOF, 42, 0, ""},
 		},
 	},
+	{"This sentence is a \nmeaningless one.",
+		[]token{
+			{tokenText, 0, 4, "This"}, {tokenSpace, 4, 1, " "}, {tokenText, 5, 8, "sentence"}, {tokenSpace, 13, 1, " "},
+			{tokenText, 14, 2, "is"}, {tokenSpace, 16, 1, " "}, {tokenText, 17, 1, "a"}, {tokenSpace, 18, 1, " "},
+			{tokenNL, 19, 1, "\n"}, {tokenText, 20, 11, "meaningless"}, {tokenSpace, 31, 1, " "}, {tokenText, 32, 4, "one."}, token{tokenEOF, 36, 0, ""},
+		},
+	},
 }
 
 // collect gathers the emitted items into a slice.

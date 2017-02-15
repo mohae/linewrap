@@ -445,7 +445,6 @@ func lexSpace(l *lexer) stateFn {
 	// otherwise backup to ensure only space tokens are emitted.
 	l.backup()
 	l.emit(tokenSpace)
-	l.next()
 	return lexText
 }
 
