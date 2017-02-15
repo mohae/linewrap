@@ -6,6 +6,13 @@ import (
 	"unicode/utf8"
 )
 
+const (
+	cr                    = '\r'
+	nl                    = '\n'
+	tab                   = '\t'
+	zeroWidthNoBreakSpace = "\uFEFF"
+)
+
 // Pos is a byte position in the original input text.
 type Pos int
 
