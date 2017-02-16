@@ -238,7 +238,7 @@ func TestCommentStyleStringer(t *testing.T) {
 	}
 }
 
-func TestStringAsCommentStyle(t *testing.T) {
+func TestParseAsCommentStyle(t *testing.T) {
 	tests := []struct {
 		value string
 		style CommentStyle
@@ -256,7 +256,7 @@ func TestStringAsCommentStyle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := StringAsCommentStyle(test.value)
+		c := ParseCommentStyle(test.value)
 		if c != test.style {
 			t.Errorf("%s: got %q want %q", test.value, c, test.style)
 		}

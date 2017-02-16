@@ -58,7 +58,7 @@ func (c CommentStyle) String() string {
 	}
 }
 
-func StringAsCommentStyle(s string) CommentStyle {
+func ParseCommentStyle(s string) CommentStyle {
 	s = strings.ToLower(s)
 	switch s {
 	case "c":
