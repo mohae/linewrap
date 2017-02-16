@@ -40,17 +40,11 @@ const (
 
 // Wrapper wraps lines so that the output is lines of Length characters or less.
 type Wrapper struct {
-	Length     int    // Max length of the line.
-	tabSize    int    // The size of a tab, in chars.
-	indentText []byte // The string used to indent wrapped lines; if empty no indent will be done.
-	indentLen  int    // the length, in chars, of the indent text. tabs in the indentText count as tabSize cars.
-	// If the wrapped string should be unwrappable. Unwrappable means all inserted
-	// linebreaks can be removed and the unwrapped string will retain all of its
-	// original formatting. If Unwrappable, the wrapped text will not be indented.
-	// If there was a new line sequence substitution during line wrapping the
-	// wrapped new line char(s) will be kept.
-	Unwrappable bool
-	CommentType // the type of comment,
+	Length      int    // Max length of the line.
+	tabSize     int    // The size of a tab, in chars.
+	indentText  []byte // The string used to indent wrapped lines; if empty no indent will be done.
+	indentLen   int    // the length, in chars, of the indent text. tabs in the indentText count as tabSize cars.
+	CommentType        // the type of comment,
 	priorToken  token
 	input       []byte
 	l           int // the length of the current line, in chars
