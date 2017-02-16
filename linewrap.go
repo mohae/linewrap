@@ -46,7 +46,6 @@ type Wrapper struct {
 	indentLen   int    // the length, in chars, of the indent text. tabs in the indentText count as tabSize cars.
 	CommentType        // the type of comment,
 	priorToken  token
-	input       []byte
 	l           int // the length of the current line, in chars
 	*lexer
 	b []byte
@@ -79,7 +78,6 @@ func (w *Wrapper) Bytes(s []byte) (b []byte, err error) {
 		return s, nil
 	}
 
-	w.input = s
 	// odds are, it'll be at least the length of the input. This minimizes
 	// re-allocs.
 	w.b = make([]byte, 0, len(s))
