@@ -216,3 +216,24 @@ SOFTWARE.
 		}
 	}
 }
+
+func TestCommentStyleStringer(t *testing.T) {
+	tests := []struct {
+		name     string
+		style    CommentStyle
+		expected string
+	}{
+		{"invalid", CommentStyle(-1), "invalid: -1 style comments"},
+		{"none", NoComment, "none"},
+		{"c++", CPPComment, "c++ style comments"},
+		{"shell", ShellComment, "shell style comments"},
+		{"c", CComment, "c style comments"},
+	}
+
+	for _, test := range tests {
+		s := test.style.String()
+		if s != test.expected {
+			t.Errorf("%s: got %q want %q", test.name, s, test.expected)
+		}
+	}
+}

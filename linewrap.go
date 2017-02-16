@@ -17,6 +17,8 @@
 
 package linewrap
 
+import "fmt"
+
 const (
 	LineLength = 80 // default line length
 	TabSize    = 8  // default tab size
@@ -37,6 +39,21 @@ const (
 	ShellComment              // shell style line comment: #
 	CComment                  // c style block comment: /* */
 )
+
+func (c CommentStyle) String() string {
+	switch c {
+	case NoComment:
+		return "none"
+	case CPPComment:
+		return "c++ style comments"
+	case ShellComment:
+		return "shell style comments"
+	case CComment:
+		return "c style comments"
+	default:
+		return fmt.Sprintf("invalid: %d style comments", c)
+	}
+}
 
 // Wrapper wraps lines so that the output is lines of Length characters or less.
 type Wrapper struct {
