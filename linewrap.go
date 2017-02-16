@@ -32,7 +32,7 @@ var (
 type CommentType int
 
 const (
-	None         CommentType = iota
+	CommentNone  CommentType = iota
 	CommentSlash             // Line comment starting with //
 	CommentHash              // Line comment starting with #
 	CommentBlock             // Block comment delimited by /* and */
@@ -59,6 +59,14 @@ func New() *Wrapper {
 	}
 }
 
+// Reset resets the non-configuration fields so that it's usable for a new
+// input. The Wrapper's configuration is not affected.
+func (w *Wrapper) Reset() {
+	w.lexer = nil
+	w.b = w.b[:0]
+	w.l = 0
+}
+
 // String returns a wrapped string. The resulting string will be consistent
 // with Wrap's configuration.
 func (w *Wrapper) String(s string) (string, error) {
@@ -78,9 +86,10 @@ func (w *Wrapper) Bytes(s []byte) (b []byte, err error) {
 		return s, nil
 	}
 
-	// odds are, it'll be at least the length of the input. This minimizes
-	// re-allocs.
-	w.b = make([]byte, 0, len(s))
+	// if b hasn't already been allocated, do an initial allocation.
+	if w.b == nil {
+		w.b = make([]byte, 0, len(s))
+	}
 
 	// If there's a comment type; lead with that. If CommentType == none, nothing
 	// will be done.
@@ -171,7 +180,7 @@ func (w *Wrapper) wrap(t *token) (skip bool) {
 
 func (w *Wrapper) commentBegin() {
 	switch w.CommentType {
-	case None:
+	case CommentNone:
 		return
 	case CommentSlash, CommentHash:
 		w.lineComment()
