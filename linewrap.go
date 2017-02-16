@@ -17,7 +17,10 @@
 
 package linewrap
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	LineLength = 80 // default line length
@@ -52,6 +55,20 @@ func (c CommentStyle) String() string {
 		return "c style comments"
 	default:
 		return fmt.Sprintf("invalid: %d style comments", c)
+	}
+}
+
+func StringAsCommentStyle(s string) CommentStyle {
+	s = strings.ToLower(s)
+	switch s {
+	case "c":
+		return CComment
+	case "cpp", "c++":
+		return CPPComment
+	case "shell", "perl":
+		return ShellComment
+	default:
+		return NoComment
 	}
 }
 

@@ -237,3 +237,28 @@ func TestCommentStyleStringer(t *testing.T) {
 		}
 	}
 }
+
+func TestStringAsCommentStyle(t *testing.T) {
+	tests := []struct {
+		value string
+		style CommentStyle
+	}{
+		{"", NoComment},
+		{"x", NoComment},
+		{"c", CComment},
+		{"C", CComment},
+		{"cpp", CPPComment},
+		{"CPP", CPPComment},
+		{"c++", CPPComment},
+		{"shell", ShellComment},
+		{"perl", ShellComment},
+		{"PERL", ShellComment},
+	}
+
+	for _, test := range tests {
+		c := StringAsCommentStyle(test.value)
+		if c != test.style {
+			t.Errorf("%s: got %q want %q", test.value, c, test.style)
+		}
+	}
+}
