@@ -23,19 +23,19 @@ const (
 )
 
 var (
-	lineCommentSlash  = []byte("// ")
-	lineCommentHash   = []byte("# ")
-	blockCommentBegin = []byte("/*\n") // the comment begin is on a separate line
-	blockCommentEnd   = []byte("*/\n") // the comment end
+	cppComment    = []byte("// ")
+	shellComment  = []byte("# ")
+	cCommentBegin = []byte("/*\n") // the comment begin is on a separate line
+	cCommentEnd   = []byte("*/\n") // the comment end
 )
 
 type CommentType int
 
 const (
-	CommentNone  CommentType = iota
-	CommentSlash             // Line comment starting with //
-	CommentHash              // Line comment starting with #
-	CommentBlock             // Block comment delimited by /* and */
+	NoComment    CommentType = iota
+	CPPComment               // C++ style line comment: //
+	ShellComment             // shell style line comment: #
+	CComment                 // c style block comment: /* */
 )
 
 // Wrapper wraps lines so that the output is lines of Length characters or less.
@@ -180,39 +180,39 @@ func (w *Wrapper) wrap(t *token) (skip bool) {
 
 func (w *Wrapper) commentBegin() {
 	switch w.CommentType {
-	case CommentNone:
+	case NoComment:
 		return
-	case CommentSlash, CommentHash:
+	case CPPComment, ShellComment:
 		w.lineComment()
-	case CommentBlock:
-		w.b = append(w.b, blockCommentBegin...)
+	case CComment:
+		w.b = append(w.b, cCommentBegin...)
 	}
 }
 
 func (w *Wrapper) commentEnd() {
-	if w.CommentType == CommentBlock {
-		w.b = append(w.b, blockCommentEnd...)
+	if w.CommentType == CComment {
+		w.b = append(w.b, cCommentEnd...)
 	}
 }
 
 func (w *Wrapper) lineComment() bool {
 	switch w.CommentType {
-	case CommentSlash:
-		w.slashComment()
+	case CPPComment:
+		w.cppComment()
 		return true
-	case CommentHash:
-		w.hashComment()
+	case ShellComment:
+		w.shellComment()
 		return true
 	}
 	return false
 }
-func (w *Wrapper) hashComment() {
-	w.b = append(w.b, lineCommentHash...)
+func (w *Wrapper) shellComment() {
+	w.b = append(w.b, shellComment...)
 	w.l = 2
 }
 
-func (w *Wrapper) slashComment() {
-	w.b = append(w.b, lineCommentSlash...)
+func (w *Wrapper) cppComment() {
+	w.b = append(w.b, cppComment...)
 	w.l = 3
 }
 
@@ -246,14 +246,14 @@ func (w *Wrapper) nl() {
 // is elided: "// " becomes "//" and "# " becomes "#"
 func (w *Wrapper) cleanBlankCommentLine() {
 	switch w.CommentType {
-	case CommentSlash:
-		w.cleanBlankSlashCommentLine()
-	case CommentHash:
-		w.cleanBlankHashCommentLine()
+	case CPPComment:
+		w.cleanBlankCPPCommentLine()
+	case ShellComment:
+		w.cleanBlankShellCommentLine()
 	}
 }
 
-func (w *Wrapper) cleanBlankSlashCommentLine() {
+func (w *Wrapper) cleanBlankCPPCommentLine() {
 	if w.b[len(w.b)-1] == 0x20 {
 		if w.b[len(w.b)-2] == '/' && w.b[len(w.b)-3] == '/' {
 			w.b = w.b[:len(w.b)-1]
@@ -261,7 +261,7 @@ func (w *Wrapper) cleanBlankSlashCommentLine() {
 	}
 }
 
-func (w *Wrapper) cleanBlankHashCommentLine() {
+func (w *Wrapper) cleanBlankShellCommentLine() {
 	if w.b[len(w.b)-1] == 0x20 {
 		if w.b[len(w.b)-2] == '#' {
 			w.b = w.b[:len(w.b)-1]

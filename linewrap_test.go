@@ -1,6 +1,9 @@
 package linewrap
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestWrapLine(t *testing.T) {
 	tests := []struct {
@@ -58,8 +61,10 @@ func TestWrapLine(t *testing.T) {
 		{"Space is big. You just won't believe how vastly, hugely, mind\u2011bogglingly big it is.", 34, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely,\nmind\u2011bogglingly big it is."},
 		{"Space is big. You just won't believe how vastly, hugely, mind\u207bbogglingly big it is.", 35, 4, "", "Space is big. You just won't\nbelieve how vastly, hugely, mind\u207b\nbogglingly big it is."},
 	}
+
+	w := New()
 	for i, test := range tests {
-		w := New()
+		w.Reset()
 		w.Length = test.length
 		w.TabSize(test.tabSize)
 		w.IndentText(test.indentText)
@@ -74,7 +79,6 @@ func TestWrapLine(t *testing.T) {
 	}
 }
 
-/*
 var gpl20 = `Copyright (C) yyyy name of author
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2.
 
@@ -101,7 +105,7 @@ func TestLineCommentSlashes(t *testing.T) {
 // Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
 	w := New()
-	w.CommentType = CommentSlash
+	w.CommentType = CPPComment
 	cmt, err := w.String(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -121,7 +125,6 @@ func TestLineCommentSlashes(t *testing.T) {
 	}
 }
 
-/*
 func TestLineCommentHashes(t *testing.T) {
 	expected := `# Copyright (C) yyyy name of author
 # This program is free software; you can redistribute it and/or modify it under
@@ -138,7 +141,7 @@ func TestLineCommentHashes(t *testing.T) {
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
 	w := New()
-	w.CommentType = CommentHash
+	w.CommentType = ShellComment
 	cmt, err := w.String(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -192,11 +195,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-/*
 `
 	// use the globala
 	w := New()
-	w.CommentType = CommentBlock
+	w.CommentType = CComment
 	cmt, err := w.String(mit)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -215,4 +217,3 @@ SOFTWARE.
 		}
 	}
 }
-*/
