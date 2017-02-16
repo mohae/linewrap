@@ -104,7 +104,7 @@ func TestLineCommentSlashes(t *testing.T) {
 // Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
 	w := New()
-	w.CommentType = CPPComment
+	w.CommentStyle = CPPComment
 	cmt, err := w.String(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -140,7 +140,7 @@ func TestLineCommentHashes(t *testing.T) {
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.`
 
 	w := New()
-	w.CommentType = ShellComment
+	w.CommentStyle = ShellComment
 	cmt, err := w.String(gpl20)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -197,7 +197,7 @@ SOFTWARE.
 `
 	// use the globala
 	w := New()
-	w.CommentType = CComment
+	w.CommentStyle = CComment
 	cmt, err := w.String(mit)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)

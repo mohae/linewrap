@@ -29,24 +29,24 @@ var (
 	cCommentEnd   = []byte("*/\n") // the comment end
 )
 
-type CommentType int
+type CommentStyle int
 
 const (
-	NoComment    CommentType = iota
-	CPPComment               // C++ style line comment: //
-	ShellComment             // shell style line comment: #
-	CComment                 // c style block comment: /* */
+	NoComment    CommentStyle = iota
+	CPPComment                // C++ style line comment: //
+	ShellComment              // shell style line comment: #
+	CComment                  // c style block comment: /* */
 )
 
 // Wrapper wraps lines so that the output is lines of Length characters or less.
 type Wrapper struct {
-	Length      int    // Max length of the line.
-	tabSize     int    // The size of a tab, in chars.
-	indentText  []byte // The string used to indent wrapped lines; if empty no indent will be done.
-	indentLen   int    // the length, in chars, of the indent text. tabs in the indentText count as tabSize cars.
-	CommentType        // the type of comment,
-	priorToken  token
-	l           int // the length of the current line, in chars
+	Length       int    // Max length of the line.
+	tabSize      int    // The size of a tab, in chars.
+	indentText   []byte // The string used to indent wrapped lines; if empty no indent will be done.
+	indentLen    int    // the length, in chars, of the indent text. tabs in the indentText count as tabSize cars.
+	CommentStyle        // the type of comment,
+	priorToken   token
+	l            int // the length of the current line, in chars
 	*lexer
 	b []byte
 }
@@ -181,7 +181,7 @@ func (w *Wrapper) wrap(t *token) (skip bool) {
 }
 
 func (w *Wrapper) commentBegin() {
-	switch w.CommentType {
+	switch w.CommentStyle {
 	case NoComment:
 		return
 	case CPPComment, ShellComment:
@@ -192,13 +192,13 @@ func (w *Wrapper) commentBegin() {
 }
 
 func (w *Wrapper) commentEnd() {
-	if w.CommentType == CComment {
+	if w.CommentStyle == CComment {
 		w.b = append(w.b, cCommentEnd...)
 	}
 }
 
 func (w *Wrapper) lineComment() bool {
-	switch w.CommentType {
+	switch w.CommentStyle {
 	case CPPComment:
 		w.cppComment()
 		return true
@@ -247,7 +247,7 @@ func (w *Wrapper) nl() {
 // blank comment line, e.g. // with no text, make sure the trailing space
 // is elided: "// " becomes "//" and "# " becomes "#"
 func (w *Wrapper) cleanBlankCommentLine() {
-	switch w.CommentType {
+	switch w.CommentStyle {
 	case CPPComment:
 		w.cleanBlankCPPCommentLine()
 	case ShellComment:
