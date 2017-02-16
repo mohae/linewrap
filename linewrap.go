@@ -143,6 +143,8 @@ func (w *Wrapper) TabSize(i int) {
 
 // IndentText sets the value that should be used to indent wrapped lines.
 func (w *Wrapper) IndentText(s string) {
+	// always reset the indent len
+	w.indentLen = 0
 	if s == "" { // no indent
 		w.indentText = nil
 		return

@@ -24,7 +24,6 @@ func TestWrapLine(t *testing.T) {
 		{"This sentence is a\r\n meaningless one", 20, 4, "    ", "This sentence is a\n    meaningless one"},
 		{"This sentence is a\r\n meaningless one", 20, 4, "\t", "This sentence is a\n\tmeaningless one"},
 		{"This sentence isn't\r\n a meaningless one", 20, 4, "    ", "This sentence isn't\n    a meaningless\n    one"},
-
 		// 10
 		{"This sentence isn't\r\n a meaningless one", 20, 4, "\t", "This sentence isn't\n\ta meaningless\n\tone"},
 		{"Reality is frequently inaccurate. One is never alone with a rubber duck.", 34, 4, "", "Reality is frequently inaccurate.\nOne is never alone with a rubber\nduck."},
