@@ -29,7 +29,6 @@ Whitespace tokens are mostly from https://www.cs.tut.fi/~jkorpela/chars/spaces.h
 #### Not considered whitespace characters:
 code point|symbol name  
 --|:--  
-U+200B|zero width space  
 U+00A0|no-break space  
 U+202F|zero width no-break space  
 
@@ -65,18 +64,11 @@ The `hyphen minus (U+002D)` is not supposed to break on a numeric context but li
 #### Dash characters not considered dashes  
 code point|symbol name  
 --|:--:  
-U+007E|tilde            U+007E  
-U+2212|minus sign       U+2212  
-U+301C|wavy dash        U+301C  
-U+3939|wavy dash        U+3939  
-U+2E3A|two em dash      U+2E3A  
-U+2E3B|three em dash    U+2E3B  
-U+FE58|small em dash    U+FE58  
-U+FE63|small hyphen-minus       U+FE63  
-U+FF0D|full width hyphen-minus  U+FF0D  
-U+1806|mongolian todo hyphen    U+1806  
-U+FE31|presentation form for vertical em dash  
-U+FE32|presentation form for vertical en dash  
+U+007E|tilde  
+U+2212|minus sign  
+U+301C|wavy dash  
+U+3939|wavy dash  
+U+1806|mongolian todo hyphen  
 
 #### Dash characters
 code point|symbol name  
