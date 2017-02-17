@@ -1,20 +1,84 @@
-// Copyright 2017 Joel Scoble
-// Licensed under the MIT License;
-// you may not use this file except in compliance with the License.
+// Copyright 2017 Joel Scoble. All rights reserved. Use of this source code is
+// governed by the Apache-2.0 license that can be found in the LICENSE file.
+
+// Package linewrap wraps text so that they are n characters, or less in
+// length. Wrapped lines can be indented or turned into comments; c, c++, and
+// shell style comments are supported.
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// This file includes code from Go's unicode package. Information about which
-// file from which the code is copied is local to the actual code in the file.
-// This is the original copyright notice for the relevant code:
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
+// Any /r characters encountered will be elided during the wrapping process;
+// only /n is supported for new lines.
+//
+// The size of tabs is configurable.
+//
+// With a few exceptions, lines can be wrapped at unicode dash and whitespace
+// characters.
+//
+// The classification of unicode tokens is drawn from Jukka "Yucca" Korpela's
+// unicode tables on: https://www.cs.tut.fi/~jkorpela/unicode/linebr.html,
+// https://www.cs.tut.fi/~jkorpela/chars/spaces.html, and
+// https://www.cs.tut.fi/~jkorpela/dashes.html. Additionally, information from
+// http://www.unicode.org/reports/tr14/#Properties was used.
+//
+// The list of symbols handled is not exhaustive.
+//
+// Line breaks may be inserted before or after whitespace characters. Any
+// trailing spaces on a line will be elided. With the exception of indentation,
+// all leading whitespaces on a wrapped line will be elided.
+//
+//     space                      U+0020
+//     ogham space mark           U+1680
+//     mongolian vowel separator  U+180E
+//     en quad                    U+2000
+//     em quad                    U+2001
+//     en space                   U+2002
+//     em space                   U+2003
+//     three per em space         U+2004
+//     four per em space          U+2005
+//     six per em space           U+2006
+//     figure space               U+2007
+//     punctuation space          U+2008
+//     thin space                 U+2009
+//     hair space                 U+200A
+//     zero width space           U+200B
+//     medium mathematical space  U+205F
+//     ideographic space          U+3000
+//
+// Exceptions to whitespace characters (no break will occur):
+//
+//     no-break space             U+00A0
+//     zero width no-break space  U+202F
+//
+// Line breaks may be inserted after a dash (hyphen) character. An em dash
+// (U+2014) can have a break before or after its occurrence but linewrap will
+// only break after its occurrence. A hyphen minus (U+002D) is not supposed to
+// break on a numeric context but linewrap does not make that differentiation.
+//
+//     hyphen minus                            U+002D
+//     soft hyphen                             U+00AD
+//     armenian hyphen                         U+058A
+//     hyphen                                  U+2010
+//     figure dash                             U+2012
+//     en dash                                 U+2013
+//     em dash                                 U+2014
+//     horizontal bar                          U+2015
+//     swung dash                              U+2053
+//     superscript mnus                        U+207B
+//     subscript minus                         U+208B
+//     two em dash                             U+2E3A
+//     three em dash                           U+2E3B
+//     presentation form for vertical em dash  U+FE31
+//     presentation form for vertical en dash  U+FE32
+//     small em dash                           U+FE58
+//     small hyphen minus                      U+FE63
+//     full width hyphen minus                 U+FF0D
+//
+// Exceptions to dash characters (no break will occur):
+//
+//      tilde                  U+007E
+//      minus sign             U+2212
+//      wavy dash              U+301C
+//      wavy dash              U+3939
+//      mongolian todo hyphen  U+1806
 package linewrap
 
 import (
